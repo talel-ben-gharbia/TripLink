@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Mail } from "lucide-react";
 import { Lock } from "lucide-react";
 import { Eye } from "lucide-react";
@@ -8,8 +7,19 @@ import { Camera } from "lucide-react";
 import { Plus } from "lucide-react";
 import { User } from "lucide-react";
 import { Phone } from "lucide-react";
-export default function RegisterForm({ formData,switchMode ,step,handleSignup,showPassword,setShowPassword,handleImageUpload,travelStyles,toggleSelection,interests}) {
-  
+export default function RegisterForm({
+  formData,
+  switchMode,
+  step,
+  handleSignup,
+  showPassword,
+  setShowPassword,
+  handleImageUpload,
+  travelStyles,
+  toggleSelection,
+  interests,
+  handleInput
+}) {
   return (
     <>
       <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
@@ -59,6 +69,8 @@ export default function RegisterForm({ formData,switchMode ,step,handleSignup,sh
               <Mail className="absolute left-4 top-4 text-gray300" />
               <input
                 type="email"
+                value={formData.email}
+                onChange={(e)=>handleInput('email',e.target.value)}
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
                 placeholder="you@example.com"
                 required
@@ -67,6 +79,8 @@ export default function RegisterForm({ formData,switchMode ,step,handleSignup,sh
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-gray300" />
               <input
+              value={formData.password}
+                onChange={(e)=>handleInput('password',e.target.value)}
                 type={showPassword ? "text" : "password"}
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
                 placeholder="password"
@@ -86,6 +100,8 @@ export default function RegisterForm({ formData,switchMode ,step,handleSignup,sh
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-gray300" />
               <input
+                value={formData.confirmPassword}
+                onChange={(e)=>handleInput('confirmPassword',e.target.value)}
                 type={showPassword ? "text" : "password"}
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
                 placeholder="confirm password"
@@ -145,6 +161,8 @@ export default function RegisterForm({ formData,switchMode ,step,handleSignup,sh
               <div className="relative">
                 <User className="absolute left-4 top-4 text-gray300" />
                 <input
+                value={formData.firstName}
+                onChange={(e)=>handleInput('firstName',e.target.value)}
                   type="text"
                   className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
                   placeholder="First name"
@@ -154,6 +172,8 @@ export default function RegisterForm({ formData,switchMode ,step,handleSignup,sh
               <div className="relative">
                 <User className="absolute left-4 top-4 text-gray300" />
                 <input
+                value={formData.lastName}
+                onChange={(e)=>handleInput('lastName',e.target.value)}
                   type="text"
                   className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
                   placeholder="Last name"
@@ -164,6 +184,8 @@ export default function RegisterForm({ formData,switchMode ,step,handleSignup,sh
             <div className="relative">
               <Phone className="absolute left-4 top-4 text-gray300" />
               <input
+              value={formData.phone}
+                onChange={(e)=>handleInput('phone',e.target.value)}
                 type="text"
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
                 placeholder="Phone number"

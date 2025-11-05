@@ -7,6 +7,8 @@ function AuthModal({ isOpen, onClose }) {
   const [mode, setMode] = useState("login");
   const [currentImage, setCurrentImage] = useState(0);
   const [step, setStep] = useState(1);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -26,12 +28,45 @@ function AuthModal({ isOpen, onClose }) {
     window.location.href = "/";
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     if (step < 3) {
-      setStep(step + 1);
-    } else {
-      window.location.href = "/";
+      return setStep(step + 1);
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("password", formData.password);
+    formDataToSend.append("firstName", formData.firstName);
+    formDataToSend.append("lastName", formData.lastName);
+    formDataToSend.append("phone", formData.phone);
+    formDataToSend.append(
+      "travelStyles",
+      JSON.stringify(formData.travelStyles)
+    );
+    formDataToSend.append("interests", JSON.stringify(formData.interests));
+
+    if (formData.profileImage) {
+      formDataToSend.append("profileImage", formData.profileImage);
+    }
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/register", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Registration failed");
+        return;
+      }
+
+      setEmailVerificationSent(true);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
     }
   };
   const handleImageUpload = (e) => {
@@ -59,6 +94,12 @@ function AuthModal({ isOpen, onClose }) {
           : [...current, value],
       };
     });
+  };
+  const handleInput = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const travelStyles = [
@@ -154,6 +195,21 @@ function AuthModal({ isOpen, onClose }) {
               setShowPassword={setShowPassword}
               handleLogin={handleLogin}
             />
+          ) : emailVerificationSent ? (
+            <div className="flex flex-col items-center justify-center text-center p-6">
+              <h2 className="text-2xl font-bold mb-4">Verify Your Email</h2>
+              <p className="mb-4">
+                A verification link has been sent to{" "}
+                <strong>{formData.email}</strong>. Please check your inbox and
+                click the link to activate your account.
+              </p>
+              <button
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+                onClick={() => setMode("login")}
+              >
+                Go to Login
+              </button>
+            </div>
           ) : (
             <RegisterForm
               switchMode={() => setMode("login")}
@@ -164,6 +220,7 @@ function AuthModal({ isOpen, onClose }) {
               handleSignup={handleSignup}
               travelStyles={travelStyles}
               interests={interests}
+              handleInput={handleInput}
             />
           )}
         </div>

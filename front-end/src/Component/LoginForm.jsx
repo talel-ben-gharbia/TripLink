@@ -5,8 +5,6 @@ import { Mail } from 'lucide-react';
 import { Lock } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import { EyeOff } from 'lucide-react';
-import { X } from 'lucide-react';
-import { useState } from "react";
 export default function LoginForm({ switchMode ,handleLogin,formData,showPassword,setShowPassword}) {
   
   return (
