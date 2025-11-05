@@ -62,44 +62,49 @@ class AuthController extends AbstractController
 
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(
-        Request $request,
-        UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $em,
-        JWTTokenManagerInterface $jwtManager
+    Request $request,
+    UserPasswordHasherInterface $passwordHasher,
+    EntityManagerInterface $em,
+    JWTTokenManagerInterface $jwtManager
     ): JsonResponse {
+    $data = json_decode($request->getContent(), true);
 
-        $data = json_decode($request->getContent(), true);
-        $email = $data['email'] ?? null;
-        $password = $data['password'] ?? null;
-
-        if (!$email || !$password) {
-            return new JsonResponse(['error' => 'Email and password are required'], 400);
-        }
-
-        $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
-        if (!$user) {
-            return new JsonResponse(['error' => 'User not found'], 404);
-        }
-
-        if (!$passwordHasher->isPasswordValid($user, $password)) {
-            return new JsonResponse(['error' => 'Invalid credentials'], 401);
-        }
-
-        if (!$user->isVerified()) {
-            return new JsonResponse(['error' => 'Email not verified'], 403);
-        }
-
-        $token = $jwtManager->create($user);
-
-        return new JsonResponse([
-            'token' => $token,
-            'user' => [
-                'id' => $user->getId(),
-                'email' => $user->getEmail(),
-                'firstName' => $user->getFirstName(),
-                'lastName' => $user->getLastName(),
-                'roles' => $user->getRoles(),
-            ]
-        ]);
+    if (!$data || !isset($data['email'], $data['password'])) {
+        return new JsonResponse(['error' => 'Email and password are required'], 400);
     }
+
+    $email = $data['email'];
+    $password = $data['password'];
+
+    $user = $em->getRepository(User::class)->findOneBy(['email' => $email]);
+    if (!$user) {
+        return new JsonResponse(['error' => 'User not found'], 404);
+    }
+
+    if (!$passwordHasher->isPasswordValid($user, $password)) {
+        return new JsonResponse(['error' => 'Invalid credentials'], 401);
+    }
+
+    if (!method_exists($user, 'isVerified') || !$user->isVerified()) {
+        return new JsonResponse(['error' => 'Email not verified'], 403);
+    }
+
+    try {
+        $token = $jwtManager->create($user);
+    } catch (\Exception $e) {
+        return new JsonResponse(['error' => 'Could not generate token'], 500);
+    }
+
+    return new JsonResponse([
+        'token' => $token,
+        'user' => [
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'firstName' => $user->getFirstName(),
+            'lastName' => $user->getLastName(),
+            'roles' => $user->getRoles(),
+        ]
+    ]);
+}
+
 }
