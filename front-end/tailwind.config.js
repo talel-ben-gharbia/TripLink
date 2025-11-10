@@ -1,21 +1,24 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}",
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html"
   ],
-  theme: { extend: {} ,
-  colors: {
-        primary: '#3b82f6',
+  theme: {
+    extend: {
+      colors: {
+        primary: '#C4614A',
         secondary: '#2D5F3F',
-        white : '#FFFFFF',
-        gray600: "#4B5563",
-        gray300: '#D1D5DB',
-        gray50:'#F9FAFB',
         accent: {
           from: '#6366F1',
           to: '#3B82F6'
         }
       },
-animation: {
+      fontFamily: {
+        'playfair': ['Playfair Display', 'serif'],
+        'inter': ['Inter', 'sans-serif'],
+      },
+      animation: {
         'float': 'float 3s ease-in-out infinite',
         'slide-up': 'slideInUp 0.6s ease-out forwards',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
@@ -23,7 +26,8 @@ animation: {
         'glow': 'glow 3s ease-in-out infinite',
         'fade-in': 'fadeIn 0.5s ease-out forwards',
         'shimmer': 'shimmer 2s infinite',
-      },keyframes: {
+      },
+      keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' }
@@ -52,6 +56,8 @@ animation: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
         }
-      }},
+      }
+    },
+  },
   plugins: [],
-};
+}

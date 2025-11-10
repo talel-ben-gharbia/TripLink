@@ -18,7 +18,7 @@ export default function RegisterForm({
   travelStyles,
   toggleSelection,
   interests,
-  handleInput
+  handleInput,
 }) {
   return (
     <>
@@ -44,9 +44,8 @@ export default function RegisterForm({
         {[1, 2, 3].map((s) => (
           <div key={s} className="flex items-center">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                s <= step ? "bg-primary text-white" : "bg-gray300 text-gray600"
-              }`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${s <= step ? "bg-primary text-white" : "bg-gray300 text-gray600"
+                }`}
             >
               {s}
             </div>
@@ -70,19 +69,44 @@ export default function RegisterForm({
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e)=>handleInput('email',e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
+                onChange={(e) => handleInput("email", e.target.value)}
+                onBlur={(e) => {
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (e.target.value && !emailRegex.test(e.target.value)) {
+                    e.target.setCustomValidity(
+                      "Please enter a valid email address"
+                    );
+                  } else {
+                    e.target.setCustomValidity("");
+                  }
+                }}
+                className={`w-full pl-12 pr-4 py-3 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm ${formData.email &&
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                    ? "border-red-300"
+                    : "border-gray300"
+                  }`}
                 placeholder="you@example.com"
                 required
               />
+              {formData.email &&
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Please enter a valid email address
+                  </p>
+                )}
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-gray300" />
               <input
-              value={formData.password}
-                onChange={(e)=>handleInput('password',e.target.value)}
+                value={formData.password}
+                onChange={(e) => handleInput("password", e.target.value)}
                 type={showPassword ? "text" : "password"}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
+                className={`w-full pl-12 pr-4 py-3 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm ${formData.password &&
+                    (formData.password.length < 8 ||
+                      !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password))
+                    ? "border-red-300"
+                    : "border-gray300"
+                  }`}
                 placeholder="password"
                 required
               />
@@ -96,14 +120,61 @@ export default function RegisterForm({
                   <EyeOff className="text-gray300" />
                 )}
               </div>
+              {formData.password && (
+                <div className="mt-1 text-xs">
+                  <p
+                    className={
+                      formData.password.length >= 8
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }
+                  >
+                    {formData.password.length >= 8 ? "✓" : "✗"} At least 8
+                    characters
+                  </p>
+                  <p
+                    className={
+                      /(?=.*[a-z])/.test(formData.password)
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }
+                  >
+                    {/(?=.*[a-z])/.test(formData.password) ? "✓" : "✗"}{" "}
+                    Lowercase letter
+                  </p>
+                  <p
+                    className={
+                      /(?=.*[A-Z])/.test(formData.password)
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }
+                  >
+                    {/(?=.*[A-Z])/.test(formData.password) ? "✓" : "✗"}{" "}
+                    Uppercase letter
+                  </p>
+                  <p
+                    className={
+                      /(?=.*\d)/.test(formData.password)
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }
+                  >
+                    {/(?=.*\d)/.test(formData.password) ? "✓" : "✗"} Number
+                  </p>
+                </div>
+              )}
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-gray300" />
               <input
                 value={formData.confirmPassword}
-                onChange={(e)=>handleInput('confirmPassword',e.target.value)}
+                onChange={(e) => handleInput("confirmPassword", e.target.value)}
                 type={showPassword ? "text" : "password"}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
+                className={`w-full pl-12 pr-4 py-3 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm ${formData.confirmPassword &&
+                    formData.password !== formData.confirmPassword
+                    ? "border-red-300"
+                    : "border-gray300"
+                  }`}
                 placeholder="confirm password"
                 required
               />
@@ -117,6 +188,12 @@ export default function RegisterForm({
                   <EyeOff className="text-gray300" />
                 )}
               </div>
+              {formData.confirmPassword &&
+                formData.password !== formData.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Passwords do not match
+                  </p>
+                )}
             </div>
           </div>
         )}
@@ -161,36 +238,68 @@ export default function RegisterForm({
               <div className="relative">
                 <User className="absolute left-4 top-4 text-gray300" />
                 <input
-                value={formData.firstName}
-                onChange={(e)=>handleInput('firstName',e.target.value)}
+                  value={formData.firstName}
+                  onChange={(e) => handleInput("firstName", e.target.value)}
                   type="text"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
+                  className={`w-full pl-12 pr-4 py-3 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm ${formData.firstName && formData.firstName.length < 2
+                      ? "border-red-300"
+                      : "border-gray300"
+                    }`}
                   placeholder="First name"
                   required
+                  minLength={2}
                 />
+                {formData.firstName && formData.firstName.length < 2 && (
+                  <p className="text-red-500 text-xs mt-1">
+                    First name must be at least 2 characters
+                  </p>
+                )}
               </div>
               <div className="relative">
                 <User className="absolute left-4 top-4 text-gray300" />
                 <input
-                value={formData.lastName}
-                onChange={(e)=>handleInput('lastName',e.target.value)}
+                  value={formData.lastName}
+                  onChange={(e) => handleInput("lastName", e.target.value)}
                   type="text"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
+                  className={`w-full pl-12 pr-4 py-3 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm ${formData.lastName && formData.lastName.length < 2
+                      ? "border-red-300"
+                      : "border-gray300"
+                    }`}
                   placeholder="Last name"
                   required
+                  minLength={2}
                 />
+                {formData.lastName && formData.lastName.length < 2 && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Last name must be at least 2 characters
+                  </p>
+                )}
               </div>
             </div>
             <div className="relative">
               <Phone className="absolute left-4 top-4 text-gray300" />
               <input
-              value={formData.phone}
-                onChange={(e)=>handleInput('phone',e.target.value)}
-                type="text"
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm"
+                value={formData.phone}
+                onChange={(e) =>
+                  handleInput("phone", e.target.value.replace(/\D/g, ""))
+                }
+                type="tel"
+                className={`w-full pl-12 pr-4 py-3 border-2 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 bg-white shadow-sm ${formData.phone &&
+                    (formData.phone.length < 8 || formData.phone.length > 15)
+                    ? "border-red-300"
+                    : "border-gray300"
+                  }`}
                 placeholder="Phone number"
                 required
+                minLength={8}
+                maxLength={15}
               />
+              {formData.phone &&
+                (formData.phone.length < 8 || formData.phone.length > 15) && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Phone number must be 8-15 digits
+                  </p>
+                )}
             </div>
           </div>
         )}
@@ -210,11 +319,10 @@ export default function RegisterForm({
                     key={style}
                     type="button"
                     onClick={() => toggleSelection("travelStyles", style)}
-                    className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all transform hover:scale-105 shadow-sm ${
-                      formData.travelStyles.includes(style)
+                    className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all transform hover:scale-105 shadow-sm ${formData.travelStyles.includes(style)
                         ? "bg-primary text-white border-primary shadow-lg"
                         : "bg-white border-gray300 hover:border-primary"
-                    }`}
+                      }`}
                   >
                     {style}
                   </button>
@@ -231,11 +339,10 @@ export default function RegisterForm({
                     key={interest}
                     type="button"
                     onClick={() => toggleSelection("interests", interest)}
-                    className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all transform hover:scale-105 shadow-sm ${
-                      formData.interests.includes(interest)
+                    className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all transform hover:scale-105 shadow-sm ${formData.interests.includes(interest)
                         ? "bg-primary text-white border-purple-600 shadow-lg"
                         : "bg-white border-gray300 hover:border-primary"
-                    }`}
+                      }`}
                   >
                     {interest}
                   </button>
@@ -247,7 +354,7 @@ export default function RegisterForm({
 
         <button
           type="submit"
-          className=" flex items-center  justify-center bg-primary rounded-md text-white px-5 py-3 hover:scale-[1.02] transition-all shadow-md  gap-1 hover:gap-3"
+          className="flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-xl px-6 py-3 hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] gap-1 hover:gap-3"
         >
           <span>{step === 3 ? "Complete Registration" : "Continue"}</span>
           <ArrowRight className="text-base pt-1" />
