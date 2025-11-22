@@ -51,6 +51,11 @@ security:
         - { path: ^/api/logout-all, roles: ROLE_USER }
         - { path: ^/api/profile, roles: ROLE_USER }
         - { path: ^/api/account/delete, roles: ROLE_USER }
+        - { path: ^/api/destinations/popular, roles: PUBLIC_ACCESS }
+        - { path: ^/api/destinations$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/destinations/\d+$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/destinations/recommended, roles: ROLE_USER }
+        - { path: ^/api/wishlist, roles: ROLE_USER }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/user, roles: ROLE_USER }

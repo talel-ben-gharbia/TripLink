@@ -6,12 +6,10 @@ import {
     User,
     Mail,
     Phone,
-    Calendar,
     Activity,
     Shield,
     CheckCircle,
     XCircle,
-    Clock,
     MapPin,
     AlertTriangle,
     Ban,
@@ -26,18 +24,12 @@ const UserDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        checkAdminAccess();
-        loadUserDetails();
-    }, [id]);
-
-    const checkAdminAccess = () => {
+    const checkAdminAccess = React.useCallback(() => {
         const userData = localStorage.getItem('user');
         if (!userData) {
             navigate('/');
             return;
         }
-        
         try {
             const currentUser = JSON.parse(userData);
             if (!currentUser.isAdmin) {
@@ -46,9 +38,9 @@ const UserDetails = () => {
         } catch (e) {
             navigate('/');
         }
-    };
+    }, [navigate]);
 
-    const loadUserDetails = async () => {
+    const loadUserDetails = React.useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/api/admin/users/${id}`);
@@ -60,7 +52,12 @@ const UserDetails = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        checkAdminAccess();
+        loadUserDetails();
+    }, [checkAdminAccess, loadUserDetails]);
 
     const handleSuspend = async () => {
         if (!window.confirm('Are you sure you want to suspend this user?')) return;

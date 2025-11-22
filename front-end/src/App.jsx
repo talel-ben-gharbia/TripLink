@@ -10,6 +10,9 @@ import Settings from "./Pages/Settings";
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
 import UserDetails from "./Pages/Admin/UserDetails";
 import './index.css'
+import Destinations from "./Pages/Destinations";
+import DestinationDetails from "./Pages/DestinationDetails";
+import AdminDestinations from "./Pages/Admin/AdminDestinations";
 
 function App() {
   useEffect(() => {
@@ -24,8 +27,11 @@ function App() {
       <Route path="/reset-password" element={<ResetPasswordForm />} />
       <Route path="/profile" element={<TravelerProfile />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/destinations" element={<Destinations />} />
+      <Route path="/destinations/:id" element={<DestinationDetails />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/users/:id" element={<UserDetails />} />
+      <Route path="/admin/destinations" element={<AdminDestinations />} />
     </Routes>
   );
 }

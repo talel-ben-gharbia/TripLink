@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, User } from "lucide-react";
+import { User } from "lucide-react";
 import { API_URL } from "../config";
 
 function Navbar({ openAuth }) {
@@ -107,9 +107,9 @@ function Navbar({ openAuth }) {
             </Link>
           </li>
           <li>
-            <a href="#" className="hover:text-primary">
+            <Link to="/destinations" className="hover:text-primary">
               Destinations
-            </a>
+            </Link>
           </li>
         </ul>
 
@@ -121,12 +121,7 @@ function Navbar({ openAuth }) {
             >
               Profile
             </Link>
-            <Link
-              to="/settings"
-              className="text-gray-700 hover:text-primary transition-colors"
-            >
-              Settings
-            </Link>
+            
             <div className="flex items-center space-x-2 text-gray-700">
               <User size={20} />
               <span className="font-medium">

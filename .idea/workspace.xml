@@ -13,10 +13,23 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 0
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "dhibyoussef"
+  }
 }]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/talel-ben-gharbia/TripLink.git",
+    "accountId": "7b78702e-6d8d-4b6e-a99c-694ee1baef64"
+  }
+}]]></component>
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="C:\xampp\php\php.exe" />
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 0
+}</component>
   <component name="ProjectId" id="35581gCrX4r2u2bXducSDuM903t" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -26,7 +39,8 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "talel",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "#2 on youssef",
     "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
@@ -47,6 +61,7 @@
       <option name="presentableId" value="Default" />
       <updated>1762388360278</updated>
       <workItem from="1762388363078" duration="3000" />
+      <workItem from="1763578210179" duration="19000" />
     </task>
     <servers />
   </component>

@@ -1,4 +1,3 @@
-import Button from "./Button";
 import { ShieldCheck } from "lucide-react";
 import { Zap } from "lucide-react";
 import { Mail } from "lucide-react";

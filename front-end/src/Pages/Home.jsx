@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "../Component/Navbar";
+import DestinationSection from "../Component/DestinationSection";
 import AuthModal from "../Component/AuthModal";
-import { CheckCircle, AlertCircle } from "lucide-react";
-import { API_URL } from "../config";
+import Hero from "../Component/Hero";
+import SearchBar from "../Component/SearchBar";
+import TrustIndicators from "../Component/TrustIndicators";
+import FAQ from "../Component/FAQ";
+import Footer from "../Component/Footer";
+import { AlertCircle, Headphones, ArrowUp } from "lucide-react";
+import { useErrorToast } from "../Component/ErrorToast";
+
 
 function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [backendStatus, setBackendStatus] = useState("checking");
   const [searchParams] = useSearchParams();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // Array of background images
-  const backgroundImages = [
-    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80",
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-  ];
+  const { showToast, ToastContainer } = useErrorToast();
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Check backend connection on mount
   useEffect(() => {
@@ -35,13 +35,33 @@ function Home() {
           setBackendStatus("connected");
         } else {
           setBackendStatus("error");
+          showToast("Backend connection failed", "error", 3500);
         }
       } catch (err) {
         console.error("Backend connection error:", err);
         setBackendStatus("error");
+        showToast("Backend connection error", "error", 3500);
       }
     };
     checkBackend();
+  }, [showToast]);
+
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener('open-auth-modal', handler);
+    return () => window.removeEventListener('open-auth-modal', handler);
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+      const doc = document.documentElement;
+      const total = (doc.scrollHeight - doc.clientHeight) || 1;
+      setScrollProgress(Math.min(1, Math.max(0, window.scrollY / total)));
+    };
+    window.addEventListener('scroll', onScroll);
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -53,7 +73,7 @@ function Home() {
       try {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
-        
+
         // Redirect admin users to admin dashboard
         if (parsedUser.isAdmin) {
           window.location.href = "/admin";
@@ -99,34 +119,15 @@ function Home() {
     };
   }, []);
 
-  // Cycle through background images
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) =>
-        (prevIndex + 1) % backgroundImages.length
-      );
-    }, 5000); // Change image every 5 seconds
 
-    return () => clearInterval(interval);
-  }, [backgroundImages.length]);
 
   return (
-    <div
-      className="App h-screen relative overflow-hidden"
-      style={{
-        backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* Dark overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/40 z-0"></div>
+    <div className="min-h-screen bg-gradient-to-b from-white via-purple-50 to-white">
 
-      {/* Content wrapper to ensure content stays above overlay */}
       <div className="relative z-10 h-full overflow-y-auto scrollbar-hide">
+        <div className="fixed top-0 left-0 h-1 z-50" style={{ width: `${scrollProgress * 100}%`, backgroundImage: 'linear-gradient(90deg, #7c3aed, #2563eb, #06b6d4)' }} aria-hidden="true" />
         <Navbar openAuth={() => setIsOpen(true)} />
+        <ToastContainer />
         <AuthModal
           isOpen={isOpen}
           onClose={() => {
@@ -171,88 +172,51 @@ function Home() {
           </div>
         )}
 
-        {/* Main Content Area */}
-        <div className="container mx-auto px-4 h-full flex flex-col justify-center">
-          {/* Hero Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 text-shadow-lg">
-              Welcome to{" "}
-              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                TripLink
-              </span>
-            </h1>
-            <p className="text-lg text-white/95 mb-6 max-w-2xl mx-auto leading-relaxed font-semibold text-shadow">
-              Connect with fellow travelers, discover amazing destinations, and create unforgettable memories together
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              {!user ? (
-                <button
-                  onClick={() => setIsOpen(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold text-base hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center space-x-2 border-2 border-white/30 backdrop-blur-sm"
-                >
-                  <span>Start Your Journey</span>
-                </button>
-              ) : (
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-white/30 max-w-md">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-                      <CheckCircle className="text-white" size={24} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-green-800">
-                        Welcome back, {user.firstName}
-                      </h2>
-                      <p className="text-green-700 text-sm">Ready for your next adventure?</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 justify-center">
-                    <button
-                      onClick={() => window.location.href = "/profile"}
-                      className="px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold border-2 border-blue-200 hover:shadow-lg hover:scale-105 transition-all duration-300 text-sm"
-                    >
-                      View Profile
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+        <div className="w-full flex flex-col space-y-4">
+          <Hero showCTA={!user} onStart={() => setIsOpen(true)} />
+          <SearchBar simple onSearch={() => {
+            const el = document.getElementById('destinations');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            showToast('Searching destinations...', 'success', 1500);
+          }} />
+          <div className="px-4">
+            <div className="section-divider" aria-hidden="true" />
           </div>
 
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 border border-white/20">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4 mx-auto shadow-lg">
-                <div className="text-white text-xl">👥</div>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Connect with Travelers</h3>
-              <p className="text-gray-700 leading-relaxed text-sm">
-                Meet like-minded travelers, share experiences, and create lasting friendships
-              </p>
-            </div>
-
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 border border-white/20">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4 mx-auto shadow-lg">
-                <div className="text-white text-xl">📍</div>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Discover Places</h3>
-              <p className="text-gray-700 leading-relaxed text-sm">
-                Find hidden gems and popular destinations recommended by fellow travelers
-              </p>
-            </div>
-
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 border border-white/20">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4 mx-auto shadow-lg">
-                <div className="text-white text-xl">📅</div>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Plan Together</h3>
-              <p className="text-gray-700 leading-relaxed text-sm">
-                Organize trips, share itineraries, and create amazing travel plans together
-              </p>
-            </div>
-          </div>
         </div>
+
+
+        <div id="destinations" className="container mx-auto px-4 pb-10">
+          {!user ? (
+            <DestinationSection mode="popular" />
+          ) : (
+            <DestinationSection mode="recommended" />
+          )}
+        </div>
+        <div className="container mx-auto px-4 mb-8">
+          <div className="section-divider" aria-hidden="true" />
+        </div>
+        <TrustIndicators />
+        <FAQ />
+        <Footer />
+        {showBackToTop && (
+          <>
+            <button
+              aria-label="Back to top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-xl flex items-center justify-center hover:opacity-90"
+            >
+              <ArrowUp />
+            </button>
+            <a
+              href="mailto:support@triplink.com"
+              aria-label="Contact support"
+              className="fixed bottom-6 right-20 w-12 h-12 rounded-full bg-white/80 backdrop-blur-xl text-purple-700 shadow-xl flex items-center justify-center hover:bg-white"
+            >
+              <Headphones />
+            </a>
+          </>
+        )}
       </div>
     </div>
   );
