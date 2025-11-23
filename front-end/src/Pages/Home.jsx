@@ -174,9 +174,12 @@ function Home() {
 
         <div className="w-full flex flex-col space-y-4">
           <Hero showCTA={!user} onStart={() => setIsOpen(true)} />
-          <SearchBar simple onSearch={() => {
+          <SearchBar simple onSearch={(payload) => {
             const el = document.getElementById('destinations');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            try {
+              window.dispatchEvent(new CustomEvent('home-search', { detail: payload }));
+            } catch {}
             showToast('Searching destinations...', 'success', 1500);
           }} />
           <div className="px-4">

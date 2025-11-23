@@ -3,7 +3,7 @@ import api from '../api';
 import { Heart, MapPin, Sparkles, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const DestinationCard = ({ destination, onWishlistChange }) => {
+const DestinationCard = ({ destination, onWishlistChange, selectable = false, selected = false, onSelectToggle }) => {
   const [loading, setLoading] = useState(false);
   const [wishlisted, setWishlisted] = useState(!!destination.wishlisted);
 
@@ -36,7 +36,7 @@ const DestinationCard = ({ destination, onWishlistChange }) => {
   };
 
   return (
-    <div className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border-2 border-transparent hover:border-purple-300">
+    <div className={`group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border-2 ${selected ? 'border-purple-400' : 'border-transparent hover:border-purple-300'}`}>
       <div className="relative h-64 overflow-hidden">
         <img
           src={imageUrl}
@@ -49,6 +49,13 @@ const DestinationCard = ({ destination, onWishlistChange }) => {
         <button onClick={toggleWishlist} className={`absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform ${wishlisted ? 'text-red-500' : 'text-gray-400'}`}>
           <Heart size={18} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
+        {selectable && (
+          <button type="button" onClick={onSelectToggle} className={`absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg ${selected ? 'text-purple-600' : 'text-gray-500'}`}>
+            <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">
+              {selected && <span className="w-2 h-2 bg-current rounded-full" />}
+            </span>
+          </button>
+        )}
         {destination.aiRecommended && (
           <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center space-x-1 shadow-lg"><Sparkles size={14} /><span>AI Pick</span></div>
         )}

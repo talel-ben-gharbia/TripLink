@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 22, 2025 at 01:54 PM
+-- Generation Time: Nov 23, 2025 at 02:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -110,13 +110,32 @@ CREATE TABLE `destination` (
 INSERT INTO `destination` (`id`, `name`, `country`, `city`, `category`, `description`, `tags`, `price_min`, `price_max`, `rating`, `images`, `created_at`) VALUES
 (1, 'Paris', 'France', 'Paris', 'city', 'City of lights and culture', NULL, 120, 280, 4.8, '[\"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
 (2, 'Tokyo', 'Japan', 'Tokyo', 'city', 'Vibrant metropolis blending tradition and technology', NULL, 90, 220, 4.7, '[\"https://images.unsplash.com/photo-1549693578-d683be217e58?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(3, 'Bali', 'Indonesia', 'Ubud', 'beach', 'Tropical paradise with rich culture', NULL, 70, 180, 4.6, '[\"https://images.unsplash.com/photo-1516997125298-4e3b7f0036d2?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(4, 'New York', 'USA', 'New York', 'city', 'Iconic skyline and endless attractions', NULL, 140, 320, 4.5, '[\"https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(5, 'Dubai', 'UAE', 'Dubai', 'luxury', 'Luxury shopping and modern architecture', NULL, 160, 380, 4.6, '[\"https://images.unsplash.com/photo-1526772662000-3f88f10405ff?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(6, 'Barcelona', 'Spain', 'Barcelona', 'cultural', 'Gaudi architecture and Mediterranean vibes', NULL, 100, 240, 4.7, '[\"https://images.unsplash.com/photo-1544989164-311a6d12df5f?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(7, 'Santorini', 'Greece', 'Santorini', 'romance', 'Whitewashed cliffs and sunset views', NULL, 150, 350, 4.8, '[\"https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(9, 'Swiss Alps', 'Switzerland', 'Zermatt', 'mountain', 'Alpine peaks with world-class skiing', NULL, 130, 300, 4.7, '[\"https://images.unsplash.com/photo-1470777631079-1e18c5e0dc2d?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04'),
-(10, 'Kyoto', 'Japan', 'Kyoto', 'cultural', 'Historic temples and serene gardens', NULL, 80, 200, 4.6, '[\"https://images.unsplash.com/photo-1465311440660-74f6d35b6a67?auto=format&fit=crop&w=1600&q=80\"]', '2025-11-21 15:42:04');
+(3, 'Bali', 'Indonesia', 'Ubud', 'beach', 'Tropical paradise with rich culture', NULL, 70, 180, 4.6, '[\"https:\\/\\/i.pinimg.com\\/1200x\\/e0\\/31\\/a9\\/e031a96ec6e6ab68a940e24c14ca96e3.jpg\"]', '2025-11-21 15:42:04'),
+(4, 'New York', 'USA', 'New York', 'city', 'Iconic skyline and endless attractions', NULL, 140, 320, 4.5, '[\"https:\\/\\/i.pinimg.com\\/736x\\/20\\/32\\/54\\/203254b9ec32a80b6f987c1a8b21559b.jpg\"]', '2025-11-21 15:42:04'),
+(5, 'Dubai', 'UAE', 'Dubai', 'luxury', 'Luxury shopping and modern architecture', NULL, 160, 380, 4.6, '[\"https:\\/\\/i.pinimg.com\\/1200x\\/c5\\/8b\\/8c\\/c58b8c199ea3479c226546d9be11dc17.jpg\"]', '2025-11-21 15:42:04'),
+(6, 'Barcelona', 'Spain', 'Barcelona', 'cultural', 'Gaudi architecture and Mediterranean vibes', NULL, 100, 240, 4.7, '[\"https:\\/\\/i.pinimg.com\\/736x\\/51\\/b0\\/a6\\/51b0a60b97585f59c60a30f837aae6d6.jpg\"]', '2025-11-21 15:42:04'),
+(7, 'Santorini', 'Greece', 'Santorini', 'romance', 'Whitewashed cliffs and sunset views', NULL, 150, 350, 4.8, '[\"https:\\/\\/i.pinimg.com\\/736x\\/6f\\/40\\/68\\/6f4068366ceaf6ea808ef4cc13603d3b.jpg\"]', '2025-11-21 15:42:04'),
+(9, 'Swiss Alps', 'Switzerland', 'Zermatt', 'mountain', 'Alpine peaks with world-class skiing', NULL, 130, 300, 4.7, '[\"https:\\/\\/i.pinimg.com\\/736x\\/b2\\/5f\\/6f\\/b25f6f1169fb415a7bbec0bb8b6c6c4e.jpg\"]', '2025-11-21 15:42:04'),
+(10, 'Kyoto', 'Japan', 'Kyoto', 'cultural', 'Historic temples and serene gardens', NULL, 80, 200, 4.6, '[\"https:\\/\\/i.pinimg.com\\/736x\\/cf\\/98\\/d6\\/cf98d67e667d3126091e1d9530ed0a0b.jpg\"]', '2025-11-21 15:42:04'),
+(11, 'Rio de Janeiro', 'Brazil', 'Rio de Janeiro', 'beach', 'Famous for its Copacabana beach and the Christ the Redeemer statue.', '[\"beach\",\"culture\",\"city\",\"carnival\"]', 100, 250, 4.7, '[\"https://i.pinimg.com/736x/37/3d/d6/373dd6935d1cdaf08b5bae1d0663fd13.jpg\"]', '2025-11-23 00:00:00'),
+(12, 'Buenos Aires', 'Argentina', 'Buenos Aires', 'city', 'Vibrant capital known for tango and rich European architecture.', '[\"city\",\"culture\",\"tango\",\"history\"]', 90, 220, 4.6, '[\"https://i.pinimg.com/1200x/cf/e4/9f/cfe49febdd7150fd83c83d66f99d15c6.jpg\"]', '2025-11-23 00:00:00'),
+(13, 'Machu Picchu', 'Peru', 'Cusco', 'historical', 'Ancient Incan city set high in the Andes mountains.', '[\"historical\",\"mountain\",\"adventure\",\"hiking\"]', 120, 300, 4.9, '[\"https://i.pinimg.com/736x/53/32/3b/53323b2387e70c4c3757aacfc163f780.jpg\"]', '2025-11-23 00:00:00'),
+(14, 'Santiago', 'Chile', 'Santiago', 'city', 'Capital city with a stunning backdrop of the Andes mountains.', '[\"city\",\"mountains\",\"culture\"]', 80, 200, 4.5, '[\"https://i.pinimg.com/1200x/62/0c/f4/620cf49c4dd266bd87552b4028b36c60.jpg\"]', '2025-11-23 00:00:00'),
+(15, 'Bogotá', 'Colombia', 'Bogotá', 'city', 'High-altitude city with a rich mix of culture, history, and food.', '[\"city\",\"culture\",\"history\",\"mountain\"]', 70, 180, 4.4, '[\"https://i.pinimg.com/1200x/5b/3c/78/5b3c783b6916df68c12b26f693c882d8.jpg\"]', '2025-11-23 00:00:00'),
+(16, 'Lima', 'Peru', 'Lima', 'coastal', 'Capital city on the Pacific coast known for its gastronomy.', '[\"city\",\"coast\",\"food\",\"culture\"]', 60, 180, 4.3, '[\"https://i.pinimg.com/1200x/f7/67/a2/f767a22025a28aa9818cc2977632c1ea.jpg\"]', '2025-11-23 00:00:00'),
+(17, 'Quito', 'Ecuador', 'Quito', 'historical', 'UNESCO-listed old town with beautiful colonial architecture.', '[\"historical\",\"city\",\"culture\",\"mountains\"]', 50, 150, 4.5, '[\"https://i.pinimg.com/736x/77/b3/81/77b381823a4da0c637d73caf62cd42ff.jpg\"]', '2025-11-23 00:00:00'),
+(18, 'Salar de Uyuni', 'Bolivia', 'Uyuni', 'nature', 'World’s largest salt flat with otherworldly landscapes.', '[\"nature\",\"desert\",\"photography\",\"adventure\"]', 100, 280, 4.8, '[\"https://i.pinimg.com/736x/ab/d9/75/abd9755513fbeb0c2041d8942a0e31f8.jpg\"]', '2025-11-23 00:00:00'),
+(19, 'Cartagena', 'Colombia', 'Cartagena', 'historical', 'Caribbean coastal city with colorful colonial streets.', '[\"beach\",\"historical\",\"culture\",\"city\"]', 90, 220, 4.6, '[\"https://i.pinimg.com/736x/23/ed/57/23ed57ea19670dad3034352ea8c19b60.jpg\"]', '2025-11-23 00:00:00'),
+(20, 'Montevideo', 'Uruguay', 'Montevideo', 'city', 'Charming coastal capital with a relaxed atmosphere.', '[\"city\",\"coast\",\"culture\",\"history\"]', 70, 180, 4.4, '[\"https://i.pinimg.com/1200x/a1/f8/14/a1f814a9838625e82bee05ebbc774308.jpg\"]', '2025-11-23 00:00:00'),
+(21, 'Sidi Bou Saïd', 'Tunisia', 'Sidi Bou Saïd', 'cultural', 'Sidi Bou Saïd is a blue-and-white cliffside village overlooking the Mediterranean, known for cafés, art streets, and stunning sea views.', '[\"cultural\",\"scenic\",\"photography\",\"mediterranean\"]', 40, 120, 4.7, '[\"https://i.pinimg.com/1200x/1b/02/7f/1b027fbc78646050b285dbd3ea52d6f4.jpg\"]', '2025-11-23 00:00:00'),
+(22, 'Djerba', 'Tunisia', 'Djerba', 'beach', 'Djerba is a calm island known for its beaches, palm trees, markets, and traditional architecture.', '[\"beach\",\"relax\",\"island\",\"culture\"]', 50, 150, 4.5, '[\"https://i.pinimg.com/1200x/e7/1a/df/e71adffee13764b4946e436cc9384b5e.jpg\"]', '2025-11-23 00:00:00'),
+(23, 'Sahara Desert (Douz)', 'Tunisia', 'Douz', 'adventure', 'Douz is the gateway to the Sahara dunes, offering camel rides, 4x4 tours, and golden desert landscapes.', '[\"desert\",\"adventure\",\"nature\",\"sahara\"]', 80, 220, 4.8, '[\"https://i.pinimg.com/736x/f4/1b/ac/f41bac3c4bc12990eee9ce6918719319.jpg\"]', '2025-11-23 00:00:00'),
+(24, 'Marrakech', 'Morocco', 'Marrakech', 'city', 'Marrakech is famous for its souks, palaces, gardens, and the vibrant Jemaa el-Fnaa square.', '[\"city\",\"culture\",\"market\",\"historical\"]', 70, 200, 4.6, '[\"https://i.pinimg.com/1200x/ab/02/44/ab024490d6f080530c0da81877240166.jpg\"]', '2025-11-23 00:00:00'),
+(25, 'Chefchaouen', 'Morocco', 'Chefchaouen', 'scenic', 'Known as the Blue Pearl, Chefchaouen is a mountain town painted entirely in blue.', '[\"blue-city\",\"scenic\",\"photography\",\"mountains\"]', 50, 140, 4.7, '[\"https://i.pinimg.com/1200x/1b/02/7f/1b027fbc78646050b285dbd3ea52d6f4.jpg\"]', '2025-11-23 00:00:00'),
+(26, 'Merzouga (Erg Chebbi)', 'Morocco', 'Merzouga', 'adventure', 'Merzouga is the entry to the giant Erg Chebbi dunes, offering camel tours and luxury desert camps.', '[\"desert\",\"adventure\",\"dunes\",\"camp\"]', 100, 260, 4.8, '[\"https://i.pinimg.com/1200x/cb/50/7a/cb507a9bc64bf477facdd2a4054c11d3.jpg\"]', '2025-11-23 00:00:00'),
+(27, 'Giza Pyramids', 'Egypt', 'Giza', 'historical', 'The Giza Pyramids are one of the world’s most iconic archaeological sites and wonders of ancient Egypt.', '[\"pyramids\",\"historical\",\"unesco\",\"ancient\"]', 120, 300, 4.9, '[\"https://i.pinimg.com/736x/44/e7/fa/44e7fab364792c4127bc97a2045855ef.jpg\"]', '2025-11-23 00:00:00'),
+(28, 'Sharm El Sheikh', 'Egypt', 'Sharm El Sheikh', 'beach', 'Sharm El Sheikh is known for its Red Sea beaches, luxury resorts, and world-class diving spots.', '[\"beach\",\"diving\",\"red-sea\",\"resort\"]', 80, 220, 4.6, '[\"https://i.pinimg.com/736x/f7/7f/fe/f77ffed088a4148b72843536dc59ca28.jpg\"]', '2025-11-23 00:00:00'),
+(29, 'Luxor', 'Egypt', 'Luxor', 'cultural', 'Luxor is an open-air museum featuring Karnak Temple, Valley of the Kings, and ancient Egyptian monuments.', '[\"temples\",\"history\",\"culture\",\"ancient-egypt\"]', 70, 180, 4.7, '[\"https://i.pinimg.com/736x/35/3a/89/353a89890413e8f0fce5ea24497e96a3.jpg\"]', '2025-11-23 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -205,7 +224,9 @@ INSERT INTO `login_attempt` (`id`, `email`, `ip_address`, `attempted_at`, `succe
 (31, 'youssefdhib@gmail.com', '127.0.0.1', '2025-11-21 22:44:18', 1),
 (32, 'admin@gmail.com', '127.0.0.1', '2025-11-21 23:24:55', 1),
 (33, 'admin@gmail.com', '127.0.0.1', '2025-11-21 23:54:59', 1),
-(34, 'admin@gmail.com', '127.0.0.1', '2025-11-22 00:04:35', 1);
+(34, 'admin@gmail.com', '127.0.0.1', '2025-11-22 00:04:35', 1),
+(35, 'admin@gmail.com', '127.0.0.1', '2025-11-23 11:08:49', 1),
+(36, 'admin@gmail.com', '127.0.0.1', '2025-11-23 11:17:26', 1);
 
 -- --------------------------------------------------------
 
@@ -251,7 +272,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `email`, `roles`, `password`, `is_verified`, `status`, `token_version`, `login_attempts`, `last_login_attempt`) VALUES
-(1, 'admin@gmail.com', '[\"ROLE_ADMIN\"]', '$2y$13$k/VeLVFKvxiZiw3yUnqXg.SUlq9l5K5mF4Y2fHpgLa8Kc9xXWXGhm', 1, 'ACTIVE', 14, 0, NULL),
+(1, 'admin@gmail.com', '[\"ROLE_ADMIN\"]', '$2y$13$k/VeLVFKvxiZiw3yUnqXg.SUlq9l5K5mF4Y2fHpgLa8Kc9xXWXGhm', 1, 'ACTIVE', 16, 0, NULL),
 (5, 'youssefdhib@gmail.com', '[\"ROLE_USER\"]', '$2y$13$U8dViyHQ5MoWY9aKM4f4NeiDuzH1EVwdRWl0Y0F1/Znsgl.tSy1rW', 1, 'ACTIVE', 19, 0, NULL),
 (6, 'demo1@triplink.test', '[\"ROLE_USER\"]', 'demo-password-hash', 1, 'ACTIVE', 1, 0, NULL),
 (7, 'demo2@triplink.test', '[\"ROLE_USER\"]', 'demo-password-hash', 1, 'ACTIVE', 1, 0, NULL),
@@ -473,7 +494,7 @@ ALTER TABLE `blacklisted_token`
 -- AUTO_INCREMENT for table `destination`
 --
 ALTER TABLE `destination`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `email_verification`
@@ -485,7 +506,7 @@ ALTER TABLE `email_verification`
 -- AUTO_INCREMENT for table `login_attempt`
 --
 ALTER TABLE `login_attempt`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `reset_password_request`

@@ -17,7 +17,6 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
   const popularDestinations = ['Paris', 'Tokyo', 'Bali', 'New York', 'Dubai', 'Barcelona'];
 
   const handleSearch = () => {
-    if (!destination.trim()) return;
     setSearching(true);
     const payload = { destination, checkIn, checkOut, guests, budgetMin, budgetMax };
     setTimeout(() => {
@@ -146,17 +145,17 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <span className="text-xs text-gray-500 font-medium">Popular:</span>
-              <div className="flex flex-wrap gap-2">
-                {['Beach', 'Mountain', 'City', 'Luxury', 'Adventure'].map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setDestination(filter)}
-                    className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full shadow-sm hover:border-purple-400 hover:text-purple-700 transition-colors"
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
+                <div className="flex flex-wrap gap-2">
+                  {['Beach', 'Mountain', 'City', 'Luxury', 'Adventure'].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setDestination(filter)}
+                      className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full shadow-sm hover:border-purple-400 hover:text-purple-700 transition-colors"
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
