@@ -10,6 +10,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Navbar from "../Component/Navbar";
+import Footer from "../Component/Footer";
 import { API_URL } from "../config";
 
 function Settings() {
@@ -306,12 +307,15 @@ function Settings() {
 
   return (
     <>
-      <div className="min-h-screen page-bg">
+      <div className="min-h-screen page-bg flex flex-col">
         <Navbar openAuth={() => { }} />
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8">
-            Security Settings
-          </h1>
+        <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold brand-gradient-text mb-2">
+              Settings
+            </h1>
+            <p className="text-gray-600">Manage your account settings and preferences</p>
+          </div>
 
           {/* Update Profile */}
           <div className="glass-card p-6 mb-8">
@@ -671,6 +675,7 @@ function Settings() {
             )}
           </div>
         </div>
+        <Footer />
       </div>
     </>
   );

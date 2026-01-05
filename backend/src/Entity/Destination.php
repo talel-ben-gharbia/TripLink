@@ -44,6 +44,24 @@ class Destination
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $images = null;
 
+    /**
+     * Phase 1: Featured destinations for homepage highlights
+     */
+    #[ORM\Column(name: 'is_featured', type: 'boolean', options: ['default' => false])]
+    private bool $isFeatured = false;
+
+    /**
+     * Phase 1: Pinned destinations for manual ordering
+     */
+    #[ORM\Column(name: 'is_pinned', type: 'boolean', options: ['default' => false])]
+    private bool $isPinned = false;
+
+    /**
+     * Phase 1: Display order for manual ordering (lower = higher priority)
+     */
+    #[ORM\Column(name: 'display_order', type: 'integer', nullable: true)]
+    private ?int $displayOrder = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -170,5 +188,40 @@ class Destination
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    // Phase 1: Editorial control methods
+
+    public function isFeatured(): bool
+    {
+        return $this->isFeatured;
+    }
+
+    public function setIsFeatured(bool $isFeatured): static
+    {
+        $this->isFeatured = $isFeatured;
+        return $this;
+    }
+
+    public function isPinned(): bool
+    {
+        return $this->isPinned;
+    }
+
+    public function setIsPinned(bool $isPinned): static
+    {
+        $this->isPinned = $isPinned;
+        return $this;
+    }
+
+    public function getDisplayOrder(): ?int
+    {
+        return $this->displayOrder;
+    }
+
+    public function setDisplayOrder(?int $displayOrder): static
+    {
+        $this->displayOrder = $displayOrder;
+        return $this;
     }
 }

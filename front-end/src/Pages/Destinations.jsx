@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../Component/Navbar';
 import DestinationSection from '../Component/DestinationSection';
 import AuthModal from '../Component/AuthModal';
+import Footer from '../Component/Footer';
 
 const Destinations = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,10 +14,13 @@ const Destinations = () => {
   }, []);
 
   return (
-    <div className="min-h-screen page-bg">
+    <div className="min-h-screen page-bg flex flex-col">
       <Navbar openAuth={() => setIsOpen(true)} />
       <AuthModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
-      <DestinationSection mode="browse" />
+      <div className="flex-1">
+        <DestinationSection mode="browse" />
+      </div>
+      <Footer />
     </div>
   );
 };

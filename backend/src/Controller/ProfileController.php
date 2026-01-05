@@ -3,6 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
+use App\Repository\WishlistItemRepository;
+use App\Repository\DestinationReviewRepository;
+use App\Repository\ActivityLogRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -186,6 +190,172 @@ class ProfileController extends AbstractController
                 'profileImage' => $profile?->getAvatar(),
             ]
         ], 200);
+    }
+
+    /**
+     * Phase 1: Get public user profile (read-only)
+     * 
+     * Shows public profile information and contribution summary
+     * Does not require authentication
+     */
+    #[Route('/api/users/{id}/profile', name: 'api_user_public_profile', methods: ['GET'])]
+    public function getPublicProfile(
+        int $id,
+        UserRepository $userRepo,
+        WishlistItemRepository $wishlistRepo,
+        DestinationReviewRepository $reviewRepo
+    ): JsonResponse {
+        $user = $userRepo->find($id);
+        
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+
+        // Only show active users
+        if ($user->getStatus() !== 'ACTIVE') {
+            return new JsonResponse(['error' => 'User profile not available'], 404);
+        }
+
+        $profile = $user->getProfile();
+        $preferences = $user->getPreferences();
+        $activity = $user->getActivity();
+
+        // Phase 1: Contribution summary
+        $wishlistCount = $wishlistRepo->countByUser($user);
+        $reviewCount = $reviewRepo->countByUser($user);
+
+        return new JsonResponse([
+            'id' => $user->getId(),
+            'firstName' => $profile?->getFirstName(),
+            'lastName' => $profile?->getLastName(),
+            'profileImage' => $profile?->getAvatar(),
+            // Phase 1: Public travel preferences (non-sensitive)
+            'travelStyles' => $preferences?->getTravelStyles(),
+            'interests' => $preferences?->getInterests(),
+            // Phase 1: Contribution summary
+            'contributions' => [
+                'wishlistCount' => $wishlistCount,
+                'reviewCount' => $reviewCount, // Will be implemented in Phase 2
+                'totalContributions' => $wishlistCount + $reviewCount,
+            ],
+            // Public activity info
+            'memberSince' => $activity?->getCreatedAt()?->format('Y-m-d'),
+            'isVerified' => $user->isVerified(),
+            // Roles (for trust signals - Phase 2)
+            'isAgent' => $user->isAgent(),
+        ]);
+    }
+
+    /**
+     * Get current user's reviews and ratings
+     */
+    #[Route('/api/profile/reviews', name: 'api_profile_reviews', methods: ['GET'])]
+    public function getMyReviews(
+        DestinationReviewRepository $reviewRepo
+    ): JsonResponse {
+        $user = $this->getUser();
+        
+        if (!$user || !$user instanceof User) {
+            return new JsonResponse(['error' => 'Not authenticated'], 401);
+        }
+
+        $reviews = $reviewRepo->findByUser($user, 50);
+        $data = array_map(function ($review) {
+            $destination = $review->getDestination();
+            return [
+                'id' => $review->getId(),
+                'rating' => $review->getRating(),
+                'comment' => $review->getComment(),
+                'isPublic' => $review->isPublic(),
+                'createdAt' => $review->getCreatedAt()->format('c'),
+                'updatedAt' => $review->getUpdatedAt()?->format('c'),
+                'destination' => [
+                    'id' => $destination->getId(),
+                    'name' => $destination->getName(),
+                    'city' => $destination->getCity(),
+                    'country' => $destination->getCountry(),
+                    'image' => $destination->getImages() ? $destination->getImages()[0] : null,
+                ],
+            ];
+        }, $reviews);
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * Get current user's activity summary with detailed activity log
+     */
+    #[Route('/api/profile/activity', name: 'api_profile_activity', methods: ['GET'])]
+    public function getMyActivity(
+        DestinationReviewRepository $reviewRepo,
+        WishlistItemRepository $wishlistRepo,
+        ActivityLogRepository $activityLogRepo
+    ): JsonResponse {
+        $user = $this->getUser();
+        
+        if (!$user || !$user instanceof User) {
+            return new JsonResponse(['error' => 'Not authenticated'], 401);
+        }
+
+        $activity = $user->getActivity();
+        $reviews = $reviewRepo->findByUser($user, 10);
+        $wishlistCount = $wishlistRepo->countByUser($user);
+        $reviewCount = $reviewRepo->countByUser($user);
+
+        // Calculate average rating given
+        $avgRatingGiven = null;
+        if ($reviewCount > 0) {
+            $ratings = array_map(fn($r) => $r->getRating(), $reviews);
+            $avgRatingGiven = round(array_sum($ratings) / count($ratings), 1);
+        }
+
+        // Get detailed activity log
+        $activityLogs = $activityLogRepo->findByUser($user, 100);
+        $activityTimeline = array_map(function ($log) {
+            $actionLabels = [
+                'view_destination' => 'Viewed destination',
+                'create_review' => 'Created review',
+                'update_review' => 'Updated review',
+                'delete_review' => 'Deleted review',
+                'add_wishlist' => 'Added to wishlist',
+                'remove_wishlist' => 'Removed from wishlist',
+            ];
+            
+            return [
+                'id' => $log->getId(),
+                'actionType' => $log->getActionType(),
+                'actionLabel' => $actionLabels[$log->getActionType()] ?? ucfirst(str_replace('_', ' ', $log->getActionType())),
+                'entityType' => $log->getEntityType(),
+                'entityId' => $log->getEntityId(),
+                'metadata' => $log->getMetadata(),
+                'createdAt' => $log->getCreatedAt()->format('c'),
+            ];
+        }, $activityLogs);
+
+        return new JsonResponse([
+            'memberSince' => $activity?->getCreatedAt()?->format('c'),
+            'lastLogin' => $activity?->getLastLogin()?->format('c'),
+            'stats' => [
+                'totalReviews' => $reviewCount,
+                'totalWishlistItems' => $wishlistCount,
+                'averageRatingGiven' => $avgRatingGiven,
+                'totalViews' => $activityLogRepo->countByActionType($user, 'view_destination'),
+            ],
+            'recentReviews' => array_map(function ($review) {
+                $destination = $review->getDestination();
+                return [
+                    'id' => $review->getId(),
+                    'rating' => $review->getRating(),
+                    'comment' => $review->getComment(),
+                    'createdAt' => $review->getCreatedAt()->format('c'),
+                    'destination' => [
+                        'id' => $destination->getId(),
+                        'name' => $destination->getName(),
+                    ],
+                ];
+            }, array_slice($reviews, 0, 5)),
+            'activityTimeline' => $activityTimeline,
+        ]);
     }
 }
 

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { Plus, Trash2, Edit, MapPin } from 'lucide-react';
+import { Plus, Trash2, Edit, MapPin, Sparkles, Pin } from 'lucide-react';
 
 const AdminDestinations = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [form, setForm] = useState({ name: '', country: '', city: '', category: 'city', priceMin: '', priceMax: '', rating: '', image: '' });
+  const [form, setForm] = useState({ name: '', country: '', city: '', category: 'city', priceMin: '', priceMax: '', image: '' });
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -46,7 +46,6 @@ const AdminDestinations = () => {
         category: form.category || 'city',
         priceMin: form.priceMin ? Number(form.priceMin) : null,
         priceMax: form.priceMax ? Number(form.priceMax) : null,
-        rating: form.rating ? Number(form.rating) : null,
         images: form.image ? [form.image] : [],
       };
       if (editingId) {
@@ -54,7 +53,7 @@ const AdminDestinations = () => {
       } else {
         await api.post('/api/admin/destinations', payload);
       }
-      setForm({ name: '', country: '', city: '', category: 'city', priceMin: '', priceMax: '', rating: '', image: '' });
+      setForm({ name: '', country: '', city: '', category: 'city', priceMin: '', priceMax: '', image: '' });
       setEditingId(null);
       load();
     } catch (e) {
@@ -71,7 +70,6 @@ const AdminDestinations = () => {
       category: d.category || 'city',
       priceMin: d.priceMin || '',
       priceMax: d.priceMax || '',
-      rating: d.rating || '',
       image: d.image || ''
     });
   };
@@ -83,6 +81,34 @@ const AdminDestinations = () => {
       load();
     } catch (e) {
       alert(e.message || 'Failed to delete destination');
+    }
+  };
+
+  // Phase 1: Feature/unfeature destination
+  const toggleFeature = async (id, currentState) => {
+    try {
+      if (currentState) {
+        await api.post(`/api/admin/destinations/${id}/unfeature`);
+      } else {
+        await api.post(`/api/admin/destinations/${id}/feature`);
+      }
+      load();
+    } catch (e) {
+      alert(e.message || 'Failed to update featured status');
+    }
+  };
+
+  // Phase 1: Pin/unpin destination
+  const togglePin = async (id, currentState) => {
+    try {
+      if (currentState) {
+        await api.post(`/api/admin/destinations/${id}/unpin`);
+      } else {
+        await api.post(`/api/admin/destinations/${id}/pin`);
+      }
+      load();
+    } catch (e) {
+      alert(e.message || 'Failed to update pinned status');
     }
   };
 
@@ -114,7 +140,6 @@ const AdminDestinations = () => {
             </select>
             <input value={form.priceMin} onChange={(e)=>setForm({...form,priceMin:e.target.value})} placeholder="Price Min" type="number" className="border rounded px-3 py-2" />
             <input value={form.priceMax} onChange={(e)=>setForm({...form,priceMax:e.target.value})} placeholder="Price Max" type="number" className="border rounded px-3 py-2" />
-            <input value={form.rating} onChange={(e)=>setForm({...form,rating:e.target.value})} placeholder="Rating" type="number" step="0.1" className="border rounded px-3 py-2" />
             <input value={form.image} onChange={(e)=>setForm({...form,image:e.target.value})} placeholder="Image URL" className="border rounded px-3 py-2 md:col-span-3" />
           </div>
           <button type="submit" className="mt-4 px-5 py-2 bg-blue-600 text-white rounded flex items-center gap-2">
@@ -135,12 +160,31 @@ const AdminDestinations = () => {
                     <div className="font-bold text-gray-900">{d.name}</div>
                     <div className="text-xs text-gray-600">{d.category}</div>
                   </div>
-                  {d.rating && <div className="text-yellow-600 font-semibold">{Number(d.rating).toFixed(1)}</div>}
+                  {(d.isFeatured || d.isPinned) && (
+                    <div className="flex items-center gap-1">
+                      {d.isFeatured && <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1"><Sparkles size={10} />Featured</span>}
+                      {d.isPinned && <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700 border border-yellow-200 flex items-center gap-1"><Pin size={10} />Pinned</span>}
+                    </div>
+                  )}
                 </div>
                 {(d.priceMin || d.priceMax) && <div className="text-sm text-gray-700 mt-1">{d.priceMin ? `$${d.priceMin}` : ''}{d.priceMax ? ` - $${d.priceMax}` : ''}</div>}
-                <div className="flex gap-2 mt-3">
-                  <button onClick={()=>edit(d)} className="px-3 py-1 bg-gray-100 rounded flex items-center gap-1"><Edit size={14}/> Edit</button>
-                  <button onClick={()=>remove(d.id)} className="px-3 py-1 bg-red-600 text-white rounded flex items-center gap-1"><Trash2 size={14}/> Delete</button>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button onClick={()=>edit(d)} className="px-3 py-1 bg-gray-100 rounded flex items-center gap-1 text-sm"><Edit size={14}/> Edit</button>
+                  <button 
+                    onClick={()=>toggleFeature(d.id, d.isFeatured)} 
+                    className={`px-3 py-1 rounded flex items-center gap-1 text-sm ${d.isFeatured ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'}`}
+                    title={d.isFeatured ? 'Unfeature' : 'Feature'}
+                  >
+                    <Sparkles size={14}/> {d.isFeatured ? 'Featured' : 'Feature'}
+                  </button>
+                  <button 
+                    onClick={()=>togglePin(d.id, d.isPinned)} 
+                    className={`px-3 py-1 rounded flex items-center gap-1 text-sm ${d.isPinned ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-700'}`}
+                    title={d.isPinned ? 'Unpin' : 'Pin'}
+                  >
+                    <Pin size={14}/> {d.isPinned ? 'Pinned' : 'Pin'}
+                  </button>
+                  <button onClick={()=>remove(d.id)} className="px-3 py-1 bg-red-600 text-white rounded flex items-center gap-1 text-sm"><Trash2 size={14}/> Delete</button>
                 </div>
               </div>
             </div>

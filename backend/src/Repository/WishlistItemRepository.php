@@ -36,4 +36,17 @@ class WishlistItemRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * Phase 1: Count wishlist items by user (for contribution summary)
+     */
+    public function countByUser(User $user): int
+    {
+        return (int) $this->createQueryBuilder('w')
+            ->select('COUNT(w.id)')
+            ->andWhere('w.user = :u')
+            ->setParameter('u', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

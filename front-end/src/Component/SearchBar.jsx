@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Loader2, Search as SearchIcon, Users, DollarSign } from 'lucide-react';
 import DatePicker from './DatePicker';
+import { getAutocompleteSuggestions } from '../services/destinationService';
 
 function SearchBar({ compact = false, simple = false, onSearch }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -13,8 +14,54 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
   const [guests, setGuests] = useState(2);
   const [budgetMin, setBudgetMin] = useState(100);
   const [budgetMax, setBudgetMax] = useState(1000);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const searchTimeoutRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
   const popularDestinations = ['Paris', 'Tokyo', 'Bali', 'New York', 'Dubai', 'Barcelona'];
+
+  // Phase 1: Autocomplete functionality
+  useEffect(() => {
+    if (destination.length >= 2) {
+      // Debounce autocomplete requests
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      setLoadingSuggestions(true);
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const suggestions = await getAutocompleteSuggestions(destination, 8);
+          setAutocompleteSuggestions(suggestions || []);
+        } catch (error) {
+          console.error('Autocomplete error:', error);
+          setAutocompleteSuggestions([]);
+        } finally {
+          setLoadingSuggestions(false);
+        }
+      }, 300);
+    } else {
+      setAutocompleteSuggestions([]);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [destination]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = () => {
     setSearching(true);
@@ -54,18 +101,47 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
                 className="w-full pl-10 pr-4 py-3 md:py-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all bg-white shadow-sm"
               />
               {showSuggestions && !compact && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border p-2 z-10">
-                  <div className="text-xs text-gray-500 mb-2 px-2">Popular destinations</div>
-                  {popularDestinations.map((dest, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => { setDestination(dest); setShowSuggestions(false); }}
-                      className="px-3 py-2 hover:bg-purple-50 rounded cursor-pointer flex items-center space-x-2 transition-colors"
-                    >
-                      <MapPin size={14} className="text-purple-600" />
-                      <span className="text-sm text-gray-700">{dest}</span>
+                <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border z-50 max-h-80 overflow-y-auto">
+                  {loadingSuggestions ? (
+                    <div className="p-4 text-center">
+                      <Loader2 className="animate-spin text-purple-600 mx-auto" size={20} />
                     </div>
-                  ))}
+                  ) : autocompleteSuggestions.length > 0 ? (
+                    <div className="p-2">
+                      {autocompleteSuggestions.map((suggestion, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setDestination(suggestion.text || suggestion.name || '');
+                            setShowSuggestions(false);
+                          }}
+                          className="px-3 py-2 hover:bg-purple-50 rounded cursor-pointer flex items-center space-x-2 transition-colors"
+                        >
+                          <MapPin size={14} className="text-purple-600" />
+                          <span className="text-sm text-gray-700">{suggestion.text || suggestion.name}</span>
+                          {suggestion.type && (
+                            <span className="text-xs text-gray-500 ml-auto capitalize">{suggestion.type}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : destination.length >= 2 ? (
+                    <div className="p-4 text-center text-sm text-gray-500">No suggestions found</div>
+                  ) : (
+                    <div className="p-2">
+                      <div className="text-xs text-gray-500 mb-2 px-2">Popular destinations</div>
+                      {popularDestinations.map((dest, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => { setDestination(dest); setShowSuggestions(false); }}
+                          className="px-3 py-2 hover:bg-purple-50 rounded cursor-pointer flex items-center space-x-2 transition-colors"
+                        >
+                          <MapPin size={14} className="text-purple-600" />
+                          <span className="text-sm text-gray-700">{dest}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

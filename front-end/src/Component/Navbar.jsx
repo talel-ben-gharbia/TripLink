@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User } from "lucide-react";
+import { User, Menu, X } from "lucide-react";
 import { API_URL } from "../config";
+import api from "../api";
 
 function Navbar({ openAuth }) {
   const [user, setUser] = useState(null);
@@ -11,24 +12,15 @@ function Navbar({ openAuth }) {
     if (!token) return;
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
-      } else {
-        // Token invalid, clear storage
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
-      }
+      const res = await api.get("/api/me");
+      const data = res.data;
+      setUser(data.user);
+      localStorage.setItem("user", JSON.stringify(data.user));
     } catch (err) {
-      console.error("Auth verification failed:", err);
+      // Token invalid, clear storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
     }
   };
 
@@ -72,10 +64,12 @@ function Navbar({ openAuth }) {
     window.location.href = "/";
   };
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 header-blur z-50">
       <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <Link to="/" className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
             <svg
               className="w-6 h-6 text-white"
@@ -99,52 +93,143 @@ function Navbar({ openAuth }) {
               Intelligent Travel Companion
             </div>
           </div>
-        </div>
-        <ul className="flex space-x-6">
+        </Link>
+        <ul className="hidden md:flex space-x-6">
           <li>
-            <Link to="/" className="hover:text-primary">
+            <Link to="/" className="hover:text-primary transition-colors font-medium">
               Home
             </Link>
           </li>
           <li>
-            <Link to="/destinations" className="hover:text-primary">
+            <Link to="/destinations" className="hover:text-primary transition-colors font-medium">
               Destinations
             </Link>
           </li>
+          {user && (
+            <>
+              <li>
+                <Link to="/wishlist" className="hover:text-primary transition-colors font-medium">
+                  Wishlist
+                </Link>
+              </li>
+              <li>
+                <Link to="/profile" className="hover:text-primary transition-colors font-medium">
+                  Profile
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
+        
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden w-10 h-10 flex items-center justify-center"
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {mobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
 
-        {user ? (
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/profile"
-              className="text-gray-700 hover:text-primary transition-colors"
-            >
-              Profile
-            </Link>
-            
-            <div className="flex items-center space-x-2 text-gray-700">
-              <User size={20} />
-              <span className="font-medium">
-                {user.firstName} {user.lastName}
-              </span>
-            </div>
+        <div className="hidden md:flex items-center space-x-4">
+          {user ? (
+            <>
+              <div className="flex items-center space-x-2 text-gray-700">
+                <User size={20} />
+                <span className="font-medium hidden lg:inline">
+                  {user.firstName} {user.lastName}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl px-5 py-2 hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                title="Logout"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleLogout}
-              className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl px-5 py-2 hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
-              title="Logout"
+              onClick={openAuth}
+              className="btn-gradient px-5 py-2 shadow-lg hover:shadow-xl transition-all"
             >
-              Logout
+              Sign up / Sign in
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={openAuth}
-            className="btn-gradient px-5 py-2 shadow-lg hover:shadow-xl transition-all"
-          >
-            Sign up / Sign in
-          </button>
-        )}
+          )}
+        </div>
       </nav>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200">
+          <div className="px-4 py-4 space-y-3">
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+            >
+              Home
+            </Link>
+            <Link
+              to="/destinations"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+            >
+              Destinations
+            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/wishlist"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                >
+                  Wishlist
+                </Link>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                >
+                  Profile
+                </Link>
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex items-center space-x-2 text-gray-700 mb-3">
+                    <User size={20} />
+                    <span className="font-medium">
+                      {user.firstName} {user.lastName}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl px-5 py-2 hover:opacity-90 font-semibold shadow-lg transition-all"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  openAuth();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full btn-gradient px-5 py-2 shadow-lg transition-all"
+              >
+                Sign up / Sign in
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

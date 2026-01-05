@@ -37,7 +37,15 @@ security:
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
+    # 
+    # Phase 0: Foundation - Role definitions
+    # - ROLE_USER: Default role (travelers)
+    # - ROLE_AGENT: Professional agents (requires application + approval)
+    # - ROLE_ADMIN: Platform administrators
+    # 
+    # @see docs/PHASE_0_PLATFORM_SCOPE.md for permission matrix
     access_control:
+        # Public endpoints
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS }
@@ -45,20 +53,47 @@ security:
         - { path: ^/api/resend-verification, roles: PUBLIC_ACCESS }
         - { path: ^/verify/email, roles: PUBLIC_ACCESS }
         - { path: ^/api/test, roles: PUBLIC_ACCESS }
+        
+        # User endpoints (ROLE_USER required)
         - { path: ^/api/refresh-token, roles: ROLE_USER }
         - { path: ^/api/me, roles: ROLE_USER }
         - { path: ^/api/logout, roles: ROLE_USER }
         - { path: ^/api/logout-all, roles: ROLE_USER }
         - { path: ^/api/profile, roles: ROLE_USER }
         - { path: ^/api/account/delete, roles: ROLE_USER }
+        - { path: ^/api/destinations/recommended, roles: ROLE_USER }
+        - { path: ^/api/wishlist, roles: ROLE_USER }
+        - { path: ^/api/onboarding, roles: ROLE_USER }  # Phase 1: Onboarding flow
+        - { path: ^/user, roles: ROLE_USER }
+        
+        # Public destination browsing
         - { path: ^/api/destinations/popular, roles: PUBLIC_ACCESS }
         - { path: ^/api/destinations$, roles: PUBLIC_ACCESS }
         - { path: ^/api/destinations/\d+$, roles: PUBLIC_ACCESS }
-        - { path: ^/api/destinations/recommended, roles: ROLE_USER }
-        - { path: ^/api/wishlist, roles: ROLE_USER }
+        - { path: ^/api/destinations/featured, roles: PUBLIC_ACCESS }
+        - { path: ^/api/destinations/autocomplete, roles: PUBLIC_ACCESS }  # Phase 1: Search autocomplete
+        - { path: ^/api/destinations/tags, roles: PUBLIC_ACCESS }  # Phase 1: Tag suggestions
+        - { path: ^/api/destinations/categories, roles: PUBLIC_ACCESS }  # Phase 1: Category list
+        
+        # Phase 1: Public collections and user profiles
+        - { path: ^/api/collections, roles: PUBLIC_ACCESS }
+        - { path: ^/api/users/\d+/profile, roles: PUBLIC_ACCESS }  # Public user profiles
+        
+        # Reviews: Public read, authenticated write
+        - { path: ^/api/destinations/\d+/reviews/stats, roles: PUBLIC_ACCESS }  # Review stats (public)
+        - { path: ^/api/destinations/\d+/reviews$, roles: PUBLIC_ACCESS }  # List reviews (public)
+        - { path: ^/api/reviews/public, roles: PUBLIC_ACCESS }  # Public reviews for homepage
+        - { path: ^/api/destinations/\d+/reviews, roles: ROLE_USER }  # Create/update/delete reviews (authenticated)
+        
+        # Admin endpoints (ROLE_ADMIN required)
         - { path: ^/api/admin, roles: ROLE_ADMIN }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/user, roles: ROLE_USER }
+        
+        # Phase 3: Agent endpoints (to be implemented)
+        # - { path: ^/api/agent/apply, roles: ROLE_USER }  # Users can apply to become agents
+        # - { path: ^/api/agent, roles: ROLE_AGENT }       # Agent dashboard and tools
+        # - { path: ^/api/agent/packages, roles: ROLE_AGENT }  # Agent package management
+        # - { path: ^/api/admin/agents, roles: ROLE_ADMIN }    # Admin agent management
 
 when@test:
     security:

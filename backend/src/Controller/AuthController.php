@@ -252,6 +252,8 @@ class AuthController extends AbstractController
         }
 
         $profile = $user->getProfile();
+        $preferences = $user->getPreferences();
+        
         return new JsonResponse([
             'user' => [
                 'id' => $user->getId(),
@@ -262,6 +264,9 @@ class AuthController extends AbstractController
                 'isVerified' => $user->isVerified(),
                 'status' => $user->getStatus(),
                 'isAdmin' => $user->isAdmin(),
+                'isAgent' => $user->isAgent(), // Phase 0: Add agent check for frontend
+                // Phase 1: Onboarding status
+                'needsOnboarding' => !$preferences || !$preferences->isOnboardingCompleted(),
             ]
         ]);
     }

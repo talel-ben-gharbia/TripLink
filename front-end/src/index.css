@@ -545,6 +545,14 @@ body {
   }
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .scroller-mask {
   position: relative;
 }
@@ -565,6 +573,27 @@ body {
 .scroller-mask::after {
   right: 0;
   background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
+}
+
+/* Focus visible improvements for accessibility */
+*:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link for screen readers */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #7c3aed;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+.skip-to-main:focus {
+  top: 0;
 }
 
 .glass-ring {

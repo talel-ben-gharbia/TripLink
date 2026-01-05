@@ -62,7 +62,7 @@ export default function ResetPasswordForm() {
     setMessage("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/reset-password", {
+      const res = await fetch(`${API_URL}/api/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,10 +138,11 @@ export default function ResetPasswordForm() {
 
       {message && (
         <div
-          className={`mb-4 p-3 rounded-md text-sm ${message.includes("success")
+          className={`mb-4 p-3 rounded-md text-sm ${
+            message.includes("success")
               ? "bg-green-50 text-green-800"
               : "bg-red-50 text-red-800"
-            }`}
+          }`}
         >
           {message}
         </div>

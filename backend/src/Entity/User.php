@@ -120,6 +120,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return in_array('ROLE_ADMIN', $this->getRoles(), true);
     }
 
+    /**
+     * Check if user has agent role
+     * 
+     * Phase 0: Foundation - Helper method for future agent system
+     * Agents must apply and be approved (see docs/PHASE_0_AGENT_FOUNDATIONS.md)
+     */
+    public function isAgent(): bool
+    {
+        return in_array('ROLE_AGENT', $this->getRoles(), true);
+    }
+
+    /**
+     * Check if user has both agent and admin roles
+     */
+    public function isAgentOrAdmin(): bool
+    {
+        return $this->isAgent() || $this->isAdmin();
+    }
+
     public function getLoginAttempts(): int
     {
         return $this->loginAttempts;

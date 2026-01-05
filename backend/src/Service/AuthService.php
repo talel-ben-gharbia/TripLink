@@ -10,6 +10,7 @@ use App\Entity\LoginAttempt;
 use App\Entity\AuthSession;
 use App\Repository\LoginAttemptRepository;
 use App\Repository\UserRepository;
+use App\Constants\Roles;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -105,7 +106,7 @@ class AuthService
         $user = new User();
         $user->setEmail($this->validationService->sanitizeInput($data['email']));
         $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
-        $user->setRoles(["ROLE_USER"]);
+        $user->setRoles([Roles::USER]); // Phase 0: Use role constants
         $user->setStatus('PENDING'); // New users start as PENDING until email verified
 
         // Create user profile
@@ -212,19 +213,18 @@ class AuthService
             ];
         }
 
-        // Temporarily allow login without verification for testing
-        // TODO: Re-enable after fixing email verification
-        // if (!$user->isVerified()) {
-        //     $loginAttempt->setSuccess(false);
-        //     $this->em->persist($loginAttempt);
-        //     $this->em->flush();
-        //     return [
-        //         'success' => false,
-        //         'user' => null,
-        //         'token' => null,
-        //         'errors' => ['Email not verified. Please check your email for verification link.']
-        //     ];
-        // }
+        // Check if user email is verified
+        if (!$user->isVerified()) {
+            $loginAttempt->setSuccess(false);
+            $this->em->persist($loginAttempt);
+            $this->em->flush();
+            return [
+                'success' => false,
+                'user' => null,
+                'token' => null,
+                'errors' => ['Email not verified. Please check your email for verification link.']
+            ];
+        }
 
         // Check if user is active
         if ($user->getStatus() !== 'ACTIVE' && $user->getStatus() !== 'PENDING') {

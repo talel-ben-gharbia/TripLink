@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../api';
-import { Heart, MapPin, Sparkles, ArrowRight } from 'lucide-react';
+import { Heart, MapPin, Sparkles, ArrowRight, Pin, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const DestinationCard = ({ destination, onWishlistChange, selectable = false, selected = false, onSelectToggle }) => {
@@ -50,19 +50,40 @@ const DestinationCard = ({ destination, onWishlistChange, selectable = false, se
           <Heart size={18} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
         {selectable && (
-          <button type="button" onClick={onSelectToggle} className={`absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg ${selected ? 'text-purple-600' : 'text-gray-500'}`}>
+          <button type="button" onClick={onSelectToggle} className={`absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg z-20 ${selected ? 'text-purple-600' : 'text-gray-500'}`}>
             <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">
               {selected && <span className="w-2 h-2 bg-current rounded-full" />}
             </span>
           </button>
         )}
-        {destination.aiRecommended && (
-          <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center space-x-1 shadow-lg"><Sparkles size={14} /><span>AI Pick</span></div>
+        {destination.isFeatured && (
+          <div className="absolute bottom-4 left-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1.5 rounded-full text-sm font-bold flex items-center space-x-1 shadow-lg z-10">
+            <Sparkles size={14} />
+            <span>Featured</span>
+          </div>
+        )}
+        {destination.isPinned && !destination.isFeatured && (
+          <div className="absolute bottom-4 left-4 bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-full text-sm font-bold flex items-center space-x-1 shadow-lg z-10 border border-yellow-200">
+            <Pin size={14} />
+            <span>Pinned</span>
+          </div>
+        )}
+        {destination.aiRecommended && !destination.isFeatured && !destination.isPinned && (
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center space-x-1 shadow-lg">
+            <Sparkles size={14} />
+            <span>AI Pick</span>
+          </div>
         )}
       </div>
       <div className="p-6">
         <h3 className="text-2xl font-bold mb-1 text-gray-900">{destination.name}</h3>
-        <div className="text-gray-600 mb-3 flex items-center"><MapPin size={14} className="mr-1" /><span>{destination.city ? `${destination.city}, ${destination.country}` : destination.country}</span></div>
+        <div className="text-gray-600 mb-2 flex items-center"><MapPin size={14} className="mr-1" /><span>{destination.city ? `${destination.city}, ${destination.country}` : destination.country}</span></div>
+        {destination.rating && (
+          <div className="mb-3 flex items-center gap-1">
+            <Star size={14} className="text-yellow-500 fill-current" />
+            <span className="text-sm font-semibold text-gray-700">{destination.rating.toFixed(1)}</span>
+          </div>
+        )}
         <div className="mb-4"></div>
         <div className="flex justify-between items-center">
           <div>

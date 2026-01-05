@@ -41,7 +41,9 @@ class EmailService
      */
     public function sendPasswordResetEmail(User $user, string $token): void
     {
-        $frontendUrl = $this->params->has('app.frontend_url') ? $this->params->get('app.frontend_url') : 'http://localhost:3000';
+        $frontendUrl = $this->params->has('app.frontend_url') && !empty($this->params->get('app.frontend_url')) 
+            ? $this->params->get('app.frontend_url') 
+            : ($_ENV['FRONTEND_URL'] ?? 'http://localhost:3000');
         $resetUrl = $frontendUrl . '/reset-password?token=' . $token;
         $fromEmail = $this->params->has('app.mailer_from') ? $this->params->get('app.mailer_from') : 'noreply@triplink.com';
         $fromName = $this->params->has('app.mailer_from_name') ? $this->params->get('app.mailer_from_name') : 'TripLink';

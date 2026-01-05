@@ -80,12 +80,26 @@ const DestinationSection = ({ mode }) => {
       } else {
         if (q) params.q = q;
         if (country) params.country = country;
-        if (tag) params.category = tag;
+        // Phase 1: Support multi-tag filtering
+        if (tag) {
+          // If tag is comma-separated, pass as is; otherwise single tag
+          params.tags = tag.includes(',') ? tag : tag;
+        }
         if (priceMin !== '') params.priceMin = Number(priceMin);
         if (priceMax !== '') params.priceMax = Number(priceMax);
+        // Phase 1: Enhanced sorting
         if (sorts.length) {
           const [key, dir] = sorts[0].split(':');
-          params.sort = `${key}:${dir}`;
+          // Map frontend sort keys to backend sort keys
+          const sortMap = {
+            'rating': 'rating',
+            'priceMin': 'price',
+            'priceMax': 'price',
+            'name': 'alphabetical',
+            'score': 'popularity' // Default to popularity for score
+          };
+          const backendKey = sortMap[key] || key;
+          params.sort = `${backendKey}:${dir}`;
         }
       }
       const res = await api.get(url, { params });
@@ -646,13 +660,13 @@ const DestinationSection = ({ mode }) => {
 
 
       {showCompare && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl border w-[95%] max-w-6xl max-h-[85vh] overflow-auto">
-            <div className="flex items-center justify-between p-4 border-b">
+        <div className="fixed inset-0 bg-black/40 z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl border w-full max-w-6xl mx-auto my-4 flex flex-col max-h-[calc(100vh-2rem)]">
+            <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
               <div className="flex items-center gap-2"><Grid2x2 /><span className="font-semibold">Comparison</span></div>
               <button type="button" onClick={() => setShowCompare(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><X /></button>
             </div>
-            <div className="p-4">
+            <div className="p-4 overflow-y-auto flex-1">
               <div className="overflow-x-auto">
                 <table className="min-w-full border">
                   <thead>

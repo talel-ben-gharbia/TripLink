@@ -67,9 +67,9 @@ function Footer() {
         <div>
           <h5 className="font-semibold text-white mb-3">Quick Links</h5>
           <ul className="space-y-2">
-            <li><button type="button" className="hover:text-white">Destinations</button></li>
-            <li><button type="button" className="hover:text-white">Deals</button></li>
-            <li><button type="button" className="hover:text-white">Support</button></li>
+            <li><a href="/destinations" className="hover:text-white transition-colors">Destinations</a></li>
+            <li><a href="/collections" className="hover:text-white transition-colors">Collections</a></li>
+            <li><a href="/" className="hover:text-white transition-colors">Support</a></li>
           </ul>
         </div>
         <div>

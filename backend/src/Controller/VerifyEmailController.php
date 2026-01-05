@@ -33,7 +33,9 @@ class VerifyEmailController extends AbstractController
         EntityManagerInterface $em,
         ParameterBagInterface $params
     ): RedirectResponse {
-        $frontendUrl = $params->has('app.frontend_url') ? $params->get('app.frontend_url') : 'http://localhost:3000';
+        $frontendUrl = ($params->has('app.frontend_url') && !empty($params->get('app.frontend_url'))) 
+            ? $params->get('app.frontend_url') 
+            : ($_ENV['FRONTEND_URL'] ?? 'http://localhost:3000');
         $id = $request->query->get('id');
 
         if (!$id) {

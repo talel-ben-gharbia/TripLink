@@ -36,6 +36,12 @@ class UserPreferences
     #[ORM\Column(name: 'preference_categories', type: 'json', nullable: true)]
     private ?array $preferenceCategories = null;
 
+    /**
+     * Phase 1: Onboarding completion status
+     */
+    #[ORM\Column(name: 'onboarding_completed', type: 'boolean', options: ['default' => false])]
+    private bool $onboardingCompleted = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -132,6 +138,19 @@ class UserPreferences
 
         $this->profileCompletion = (int)(($completion / $totalFields) * 100);
         return $this->profileCompletion;
+    }
+
+    // Phase 1: Onboarding methods
+
+    public function isOnboardingCompleted(): bool
+    {
+        return $this->onboardingCompleted;
+    }
+
+    public function setOnboardingCompleted(bool $onboardingCompleted): static
+    {
+        $this->onboardingCompleted = $onboardingCompleted;
+        return $this;
     }
 }
 
