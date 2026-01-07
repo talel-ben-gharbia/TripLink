@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import api from '../api';
-import { Heart, MapPin, Sparkles, ArrowRight } from 'lucide-react';
+import { Heart, MapPin, Sparkles, ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ReservationModal from './ReservationModal';
 
 const DestinationCard = ({ destination, onWishlistChange, selectable = false, selected = false, onSelectToggle }) => {
   const [loading, setLoading] = useState(false);
   const [wishlisted, setWishlisted] = useState(!!destination.wishlisted);
+  const [showReservationModal, setShowReservationModal] = useState(false);
 
   const imageUrl = destination.image || 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200';
   const navigate = useNavigate();
@@ -69,9 +71,28 @@ const DestinationCard = ({ destination, onWishlistChange, selectable = false, se
             <span className="text-3xl font-bold text-purple-700">{destination.priceMin ? `$${destination.priceMin}` : destination.price ? `$${destination.price}` : ''}</span>
             <span className="text-gray-600">{destination.priceMin || destination.price ? ' / night' : ''}</span>
           </div>
-          <button onClick={() => navigate(`/destinations/${destination.id}`)} className="px-5 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 transition shadow-md flex items-center space-x-1"><span>View</span><ArrowRight size={14} /></button>
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReservationModal(true);
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg hover:opacity-90 transition shadow-md flex items-center space-x-1"
+            >
+              <Calendar size={14} />
+              <span>Reserve</span>
+            </button>
+            <button onClick={() => navigate(`/destinations/${destination.id}`)} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 transition shadow-md flex items-center space-x-1"><span>View</span><ArrowRight size={14} /></button>
+          </div>
         </div>
       </div>
+      
+      {showReservationModal && (
+        <ReservationModal
+          destination={destination}
+          onClose={() => setShowReservationModal(false)}
+        />
+      )}
     </div>
   );
 };
