@@ -9,11 +9,15 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../Component/Navbar";
 import Footer from "../Component/Footer";
+import TravelDocuments from "../Component/TravelDocuments";
 import { API_URL } from "../config";
+import { useErrorToast } from "../Component/ErrorToast";
 
 function Settings() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
@@ -33,6 +37,7 @@ function Settings() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwdError, setPwdError] = useState("");
+  const { showToast, ToastContainer } = useErrorToast();
   const [pwdSuccess, setPwdSuccess] = useState("");
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [showCurrentPwd, setShowCurrentPwd] = useState(false);
@@ -63,12 +68,7 @@ function Settings() {
       const token = localStorage.getItem("token");
       if (!token) {
         console.log("No token found");
-        setUser({ 
-          _id: "test123",
-          firstName: "Test",
-          lastName: "User",
-          phone: "1234567890"
-        });
+        navigate("/");
         return;
       }
 
@@ -103,23 +103,13 @@ function Settings() {
           } catch (e) {
             console.error("Could not parse error response");
           }
-          // Set a test user for now to show the UI
-          setUser({
-            email: "test@example.com",
-            firstName: "Test",
-            lastName: "User",
-            phone: "1234567890",
-          });
+          // User not authenticated, redirect to home
+          navigate("/");
         }
       } catch (err) {
         console.error("Fetch user error:", err);
-        // Set a test user for now to show the UI
-        setUser({
-          email: "test@example.com",
-          firstName: "Test",
-          lastName: "User",
-          phone: "1234567890",
-        });
+        // User not authenticated or error occurred, redirect to home
+        navigate("/");
       }
     };
 
@@ -194,12 +184,13 @@ function Settings() {
       const data = await res.json();
       if (res.ok) {
         setUser((u) => ({ ...u, profileImage: data.user.profileImage }));
+        showToast("Avatar updated successfully!", "success", 3000);
       } else {
-        alert(data.error || "Failed to update avatar");
+        showToast(data.error || "Failed to update avatar", "error", 5000);
       }
     } catch (err) {
       console.error("Avatar upload error:", err);
-      alert("Failed to update avatar");
+      showToast("Failed to update avatar", "error", 5000);
     }
   };
 
@@ -225,7 +216,7 @@ function Settings() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message || "Account deleted successfully");
+        showToast(data.message || "Account deleted successfully", "success", 3000);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setTimeout(() => {
@@ -307,6 +298,7 @@ function Settings() {
 
   return (
     <>
+      <ToastContainer />
       <div className="min-h-screen page-bg flex flex-col">
         <Navbar openAuth={() => { }} />
         <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
@@ -583,6 +575,11 @@ function Settings() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Travel Documents */}
+          <div className="mb-8">
+            <TravelDocuments />
           </div>
 
           {/* Delete Account */}

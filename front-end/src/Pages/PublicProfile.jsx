@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Calendar, Heart, Star, Loader2 } from 'lucide-react';
 import Navbar from '../Component/Navbar';
 import Footer from '../Component/Footer';
+import SEO from '../Component/SEO';
 import { getPublicProfile } from '../services/profileService';
 
 /**
@@ -64,6 +65,10 @@ const PublicProfile = () => {
 
   return (
     <div className="min-h-screen page-bg flex flex-col">
+      <SEO 
+        title={profile ? `${profile.firstName} ${profile.lastName} - Traveler Profile - TripLink` : 'Traveler Profile - TripLink'}
+        description={profile ? `View ${profile.firstName} ${profile.lastName}'s travel profile, contributions, and favorite destinations on TripLink.` : 'View traveler profile and contributions'}
+      />
       <Navbar />
       <div className="container mx-auto px-4 py-8 flex-1">
         <button

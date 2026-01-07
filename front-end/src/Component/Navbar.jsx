@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { User, Menu, X } from "lucide-react";
 import { API_URL } from "../config";
 import api from "../api";
+import NotificationCenter from "./NotificationCenter";
+import DarkModeToggle from "./DarkModeToggle";
 
 function Navbar({ openAuth }) {
   const [user, setUser] = useState(null);
@@ -67,7 +69,7 @@ function Navbar({ openAuth }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 header-blur z-50">
+    <header className="sticky top-0 header-blur z-50 transition-all duration-300 shadow-sm">
       <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -96,13 +98,21 @@ function Navbar({ openAuth }) {
         </Link>
         <ul className="hidden md:flex space-x-6">
           <li>
-            <Link to="/" className="hover:text-primary transition-colors font-medium">
-              Home
+            <Link to="/" className="hover:text-primary transition-all duration-200 font-medium relative group">
+              <span className="relative z-10">Home</span>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </li>
           <li>
-            <Link to="/destinations" className="hover:text-primary transition-colors font-medium">
-              Destinations
+            <Link to="/destinations" className="hover:text-primary transition-all duration-200 font-medium relative group">
+              <span className="relative z-10">Destinations</span>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/collections" className="hover:text-primary transition-all duration-200 font-medium relative group">
+              <span className="relative z-10">Collections</span>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </li>
           {user && (
@@ -112,6 +122,18 @@ function Navbar({ openAuth }) {
                   Wishlist
                 </Link>
               </li>
+              <li>
+                <Link to="/bookings" className="hover:text-primary transition-colors font-medium">
+                  My Bookings
+                </Link>
+              </li>
+              {user.isAgent && (
+                <li>
+                  <Link to="/agent/dashboard" className="hover:text-primary transition-colors font-medium">
+                    Agent Dashboard
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/profile" className="hover:text-primary transition-colors font-medium">
                   Profile
@@ -137,8 +159,13 @@ function Navbar({ openAuth }) {
         </button>
 
         <div className="hidden md:flex items-center space-x-4">
+          <DarkModeToggle />
           {user ? (
             <>
+              <Link to="/help" className="text-gray-600 hover:text-gray-900 transition-colors font-medium">
+                Help
+              </Link>
+              <NotificationCenter />
               <div className="flex items-center space-x-2 text-gray-700">
                 <User size={20} />
                 <span className="font-medium hidden lg:inline">
@@ -149,6 +176,7 @@ function Navbar({ openAuth }) {
                 onClick={handleLogout}
                 className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl px-5 py-2 hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
                 title="Logout"
+                aria-label="Logout"
               >
                 Logout
               </button>
@@ -157,6 +185,7 @@ function Navbar({ openAuth }) {
             <button
               onClick={openAuth}
               className="btn-gradient px-5 py-2 shadow-lg hover:shadow-xl transition-all"
+              aria-label="Sign up or Sign in"
             >
               Sign up / Sign in
             </button>
@@ -191,6 +220,22 @@ function Navbar({ openAuth }) {
                 >
                   Wishlist
                 </Link>
+                <Link
+                  to="/bookings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                >
+                  My Bookings
+                </Link>
+                {user?.isAgent && (
+                  <Link
+                    to="/agent/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                  >
+                    Agent Dashboard
+                  </Link>
+                )}
                 <Link
                   to="/profile"
                   onClick={() => setMobileMenuOpen(false)}

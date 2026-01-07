@@ -15,6 +15,7 @@ Complete authentication system with user management, JWT-based security, and adm
 - ✅ Admin-specific optimizations (reduced session overhead)
 
 ### Note on Security
+
 - Email verification is currently disabled for development
 - Token blacklisting is implemented for regular users only
 - Admin users have simplified authentication without session tracking
@@ -145,6 +146,7 @@ backend/src/
 - CORS configuration
 
 ### Important Notes
+
 - Email verification is currently disabled for development
 - Admin users have simplified authentication without session tracking
 - Regular users have full session management and token blacklisting
@@ -194,6 +196,7 @@ backend/src/
 - `profile_image` - Profile picture filename
 
 ### Auth Session Table (for regular users only)
+
 - `id` - Primary key
 - `user_id` - Foreign key to users
 - `session_id` - Unique session identifier
@@ -203,6 +206,7 @@ backend/src/
 - `ip_address` - Client IP address
 
 ### Blacklisted Tokens
+
 - `id` - Primary key
 - `user_id` - Foreign key to users
 - `token` - Blacklisted JWT token
@@ -252,6 +256,7 @@ curl -X PUT http://localhost:8000/api/admin/users/2/status \
 ## 🎯 Development Phases
 
 ### ✅ Phase 0 — Foundation (Complete)
+
 - Platform scope & positioning
 - Permission matrix
 - Legal compliance documents
@@ -259,6 +264,7 @@ curl -X PUT http://localhost:8000/api/admin/users/2/status \
 - Code structural support
 
 ### ✅ Phase 1 — Core Travel Product (Complete)
+
 - Enhanced destination discovery (multi-tag filtering, advanced sorting)
 - Editorial control (featured/pinned destinations)
 - Curated collections system
@@ -267,6 +273,7 @@ curl -X PUT http://localhost:8000/api/admin/users/2/status \
 - Search autocomplete and tag suggestions
 
 ### 📋 Phase 2 — Travel Service & Journey (Next)
+
 - Trip & itinerary management
 - Booking flow
 - Travel document management

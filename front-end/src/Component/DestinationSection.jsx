@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import DestinationCard from './DestinationCard';
 import { MapPin, SlidersHorizontal, Save, X, Grid2x2, Layers, Filter, SortAsc, SortDesc, Compass, Tag, DollarSign, Calendar, BarChart3, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { DestinationCardSkeleton } from './LoadingSkeleton';
+import EmptyState from './EmptyState';
 
 const DestinationSection = ({ mode }) => {
   const navigate = useNavigate();
@@ -483,7 +485,18 @@ const DestinationSection = ({ mode }) => {
           <div className="text-sm text-gray-700 font-medium">{filtered.length} results</div>
           <div className="ml-3 flex items-center gap-2">
             <div className="text-sm text-gray-600">Selected: {selected.length}</div>
-            <button type="button" onClick={() => setShowCompare(true)} disabled={selected.length < 2} className={`px-3 py-2 rounded-lg border ${selected.length < 2 ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white text-gray-700 border-gray-300'} flex items-center gap-2`}><Grid2x2 size={16} />Compare</button>
+            <button 
+              type="button" 
+              onClick={() => {
+                const selectedItems = items.filter(d => selected.includes(d.id));
+                navigate('/compare', { state: { destinations: selectedItems } });
+                localStorage.setItem('triplink.comparison', JSON.stringify(selectedItems));
+              }} 
+              disabled={selected.length < 2} 
+              className={`px-3 py-2 rounded-lg border ${selected.length < 2 ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white text-gray-700 border-gray-300 hover:bg-purple-50 hover:border-purple-300'} flex items-center gap-2 transition`}
+            >
+              <Grid2x2 size={16} />Compare {selected.length > 0 && `(${selected.length})`}
+            </button>
             <button type="button" onClick={() => setSelected([])} className="px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 flex items-center gap-2"><X size={16} />Clear</button>
           </div>
         </div>
@@ -586,15 +599,8 @@ const DestinationSection = ({ mode }) => {
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="rounded-2xl overflow-hidden border bg-white">
-              <div className="h-56 animate-shimmer" />
-              <div className="p-6 space-y-3">
-                <div className="h-6 w-2/3 bg-gray-200 rounded animate-shimmer" />
-                <div className="h-4 w-1/2 bg-gray-200 rounded animate-shimmer" />
-                <div className="h-4 w-1/3 bg-gray-200 rounded animate-shimmer" />
-              </div>
-            </div>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <DestinationCardSkeleton key={i} />
           ))}
         </div>
       ) : (
@@ -607,7 +613,22 @@ const DestinationSection = ({ mode }) => {
                 </div>
               ))}
               {filtered.length === 0 && (
-                <div className="col-span-full text-center bg-white rounded-2xl p-8 text-gray-700">No destinations found — try a different filter</div>
+                <div className="col-span-full">
+                  <EmptyState
+                    icon="destinations"
+                    title="No destinations found"
+                    message="Try adjusting your search filters or browse all destinations"
+                    action={() => {
+                      setQ('');
+                      setCountry('');
+                      setPriceMin('');
+                      setPriceMax('');
+                      setTag('');
+                      loadData();
+                    }}
+                    actionLabel="Clear Filters"
+                  />
+                </div>
               )}
             </div>
           ) : (

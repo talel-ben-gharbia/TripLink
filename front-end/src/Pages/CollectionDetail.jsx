@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import Navbar from '../Component/Navbar';
 import Footer from '../Component/Footer';
+import SEO from '../Component/SEO';
 import DestinationCard from '../Component/DestinationCard';
 import { getCollectionBySlug } from '../services/collectionService';
 
@@ -65,6 +66,10 @@ const CollectionDetail = () => {
 
   return (
     <div className="min-h-screen page-bg flex flex-col">
+      <SEO 
+        title={collection ? `${collection.name} - Curated Collection - TripLink` : 'Collection - TripLink'}
+        description={collection ? collection.description || `Explore ${collection.name}, a curated collection of amazing destinations.` : 'Explore curated travel collections'}
+      />
       <Navbar />
       <div className="container mx-auto px-4 py-8 flex-1">
         <button

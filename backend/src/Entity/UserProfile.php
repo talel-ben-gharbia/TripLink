@@ -18,13 +18,13 @@ class UserProfile
     #[ORM\JoinColumn(nullable: false, name: 'user_id')]
     private ?User $user = null;
 
-    #[ORM\Column(name: 'first_name', length: 255)]
+    #[ORM\Column(name: 'first_name', length: 255, nullable: true)]
     private ?string $firstName = null;
 
-    #[ORM\Column(name: 'last_name', length: 255)]
+    #[ORM\Column(name: 'last_name', length: 255, nullable: true)]
     private ?string $lastName = null;
 
-    #[ORM\Column(length: 15)]
+    #[ORM\Column(length: 15, nullable: true)]
     private ?string $phone = null;
 
     #[ORM\Column(name: 'avatar', length: 255, nullable: true)]
@@ -51,7 +51,7 @@ class UserProfile
         return $this->firstName;
     }
 
-    public function setFirstName(string $firstName): static
+    public function setFirstName(?string $firstName): static
     {
         $this->firstName = $firstName;
         return $this;
@@ -62,7 +62,7 @@ class UserProfile
         return $this->lastName;
     }
 
-    public function setLastName(string $lastName): static
+    public function setLastName(?string $lastName): static
     {
         $this->lastName = $lastName;
         return $this;
@@ -73,7 +73,7 @@ class UserProfile
         return $this->phone;
     }
 
-    public function setPhone(string $phone): static
+    public function setPhone(?string $phone): static
     {
         $this->phone = $phone;
         return $this;

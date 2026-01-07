@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { X, ArrowRight, ArrowLeft, Sparkles, MapPin, Heart, Calendar, SkipForward } from 'lucide-react';
 import { completeOnboarding, skipOnboarding } from '../services/onboardingService';
 import { getAllCategories, getAllTags } from '../services/destinationService';
+import { useErrorToast } from './ErrorToast';
 
 /**
  * Phase 1: Onboarding Wizard Component
  * First-login onboarding flow with preference selection
  */
 const Onboarding = ({ onComplete, onSkip }) => {
+  const { showToast, ToastContainer } = useErrorToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -47,7 +49,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
       onComplete && onComplete();
     } catch (error) {
       console.error('Failed to complete onboarding:', error);
-      alert('Failed to save preferences. Please try again.');
+      showToast('Failed to save preferences. Please try again.', 'error', 5000);
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
       onSkip && onSkip();
     } catch (error) {
       console.error('Failed to skip onboarding:', error);
-      alert('Failed to skip onboarding. Please try again.');
+      showToast('Failed to skip onboarding. Please try again.', 'error', 5000);
     } finally {
       setLoading(false);
     }
@@ -76,8 +78,10 @@ const Onboarding = ({ onComplete, onSkip }) => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <>
+      <ToastContainer />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
           <div>
@@ -273,6 +277,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

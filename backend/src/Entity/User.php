@@ -47,6 +47,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'integer', options: ['default' => 0])]
     private int $loginAttempts = 0;
 
+    #[ORM\Column(name: 'must_change_password', type: 'boolean', options: ['default' => false])]
+    private bool $mustChangePassword = false;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastLoginAttempt = null;
 
@@ -330,6 +333,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             throw new \InvalidArgumentException("Invalid status: {$status}");
         }
         $this->status = $status;
+        return $this;
+    }
+
+    public function mustChangePassword(): bool
+    {
+        return $this->mustChangePassword;
+    }
+
+    public function setMustChangePassword(bool $mustChangePassword): static
+    {
+        $this->mustChangePassword = $mustChangePassword;
         return $this;
     }
 }

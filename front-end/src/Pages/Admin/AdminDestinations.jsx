@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { Plus, Trash2, Edit, MapPin, Sparkles, Pin } from 'lucide-react';
+import { useErrorToast } from '../../Component/ErrorToast';
 
 const AdminDestinations = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const AdminDestinations = () => {
   const [error, setError] = useState(null);
   const [form, setForm] = useState({ name: '', country: '', city: '', category: 'city', priceMin: '', priceMax: '', image: '' });
   const [editingId, setEditingId] = useState(null);
+  const { showToast, ToastContainer } = useErrorToast();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -55,9 +57,10 @@ const AdminDestinations = () => {
       }
       setForm({ name: '', country: '', city: '', category: 'city', priceMin: '', priceMax: '', image: '' });
       setEditingId(null);
+      showToast(editingId ? 'Destination updated successfully!' : 'Destination created successfully!', 'success', 3000);
       load();
     } catch (e) {
-      alert(e.message || 'Failed to save destination');
+      showToast(e.response?.data?.error || e.message || 'Failed to save destination', 'error', 5000);
     }
   };
 
@@ -78,9 +81,10 @@ const AdminDestinations = () => {
     if (!window.confirm('Delete this destination?')) return;
     try {
       await api.delete(`/api/admin/destinations/${id}`);
+      showToast('Destination deleted successfully!', 'success', 3000);
       load();
     } catch (e) {
-      alert(e.message || 'Failed to delete destination');
+      showToast(e.response?.data?.error || e.message || 'Failed to delete destination', 'error', 5000);
     }
   };
 
@@ -92,9 +96,10 @@ const AdminDestinations = () => {
       } else {
         await api.post(`/api/admin/destinations/${id}/feature`);
       }
+      showToast('Featured status updated successfully!', 'success', 3000);
       load();
     } catch (e) {
-      alert(e.message || 'Failed to update featured status');
+      showToast(e.response?.data?.error || e.message || 'Failed to update featured status', 'error', 5000);
     }
   };
 
@@ -106,9 +111,10 @@ const AdminDestinations = () => {
       } else {
         await api.post(`/api/admin/destinations/${id}/pin`);
       }
+      showToast('Pinned status updated successfully!', 'success', 3000);
       load();
     } catch (e) {
-      alert(e.message || 'Failed to update pinned status');
+      showToast(e.response?.data?.error || e.message || 'Failed to update pinned status', 'error', 5000);
     }
   };
 

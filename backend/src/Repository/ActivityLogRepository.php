@@ -43,5 +43,21 @@ class ActivityLogRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * Find activities by action type for a user
+     */
+    public function findByActionType(User $user, string $actionType, int $limit = 50): array
+    {
+        return $this->createQueryBuilder('a')
+            ->where('a.user = :user')
+            ->andWhere('a.actionType = :actionType')
+            ->setParameter('user', $user)
+            ->setParameter('actionType', $actionType)
+            ->orderBy('a.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }
 

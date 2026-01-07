@@ -23,11 +23,19 @@ import {
   Pin,
   Eye,
   Check,
+  Loader2,
+  DollarSign,
 } from "lucide-react";
 import * as adminCollectionService from "../../services/adminCollectionService";
+import * as adminService from "../../services/adminService";
+import * as agentService from "../../services/agentService";
+import * as bookingService from "../../services/bookingService";
+import { Calendar, Briefcase } from "lucide-react";
+import { useErrorToast } from "../../Component/ErrorToast";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { showToast, ToastContainer } = useErrorToast();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [destinations, setDestinations] = useState([]);
@@ -67,9 +75,16 @@ const AdminDashboard = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const tabsList = useMemo(
-    () => ["overview", "users", "destinations", "collections"],
+    () => ["overview", "users", "destinations", "collections", "bookings", "agents", "agent-applications"],
     []
   );
+  const [bookings, setBookings] = useState([]);
+  const [bookingStats, setBookingStats] = useState(null);
+  const [agentApplications, setAgentApplications] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [loadingApplications, setLoadingApplications] = useState(false);
+  const [agents, setAgents] = useState([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
   const destMetrics = useMemo(() => {
     const list = destinations || [];
     const total = list.length;
@@ -140,6 +155,144 @@ const AdminDashboard = () => {
     checkAdminAccess();
     loadDashboardDataMemo();
   }, [checkAdminAccess, loadDashboardDataMemo]);
+
+  useEffect(() => {
+    if (activeTab === 'bookings') {
+      loadBookings();
+    } else if (activeTab === 'agent-applications') {
+      loadAgentApplications();
+    } else if (activeTab === 'agents') {
+      loadAgents();
+    }
+  }, [activeTab]);
+
+  const loadBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const [bookingsData, statsData] = await Promise.all([
+        adminService.getAdminBookings(),
+        adminService.getAdminBookingStats()
+      ]);
+      setBookings(bookingsData.bookings || []);
+      setBookingStats(statsData);
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+      setBookings([]);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const loadAgentApplications = async () => {
+    setLoadingApplications(true);
+    try {
+      const data = await adminService.getAdminAgentApplications();
+      setAgentApplications(data.applications || []);
+    } catch (error) {
+      console.error('Error loading agent applications:', error);
+      setAgentApplications([]);
+    } finally {
+      setLoadingApplications(false);
+    }
+  };
+
+  const loadAgents = async () => {
+    setLoadingAgents(true);
+    try {
+      const response = await api.get('/api/admin/agents');
+      setAgents(response.data.agents || []);
+    } catch (error) {
+      console.error('Error loading agents:', error);
+      setAgents([]);
+    } finally {
+      setLoadingAgents(false);
+    }
+  };
+
+  const handleEditBooking = (booking) => {
+    const newCheckIn = prompt('Enter new check-in date (YYYY-MM-DD):', booking.checkInDate);
+    if (!newCheckIn) return;
+
+    const newCheckOut = prompt('Enter new check-out date (YYYY-MM-DD) or leave empty:', booking.checkOutDate || '');
+    const newGuests = prompt('Enter number of guests:', booking.numberOfGuests);
+    if (!newGuests) return;
+
+    const updateData = {
+      checkInDate: newCheckIn,
+      checkOutDate: newCheckOut || null,
+      numberOfGuests: parseInt(newGuests),
+    };
+
+    bookingService.updateBooking(booking.id, updateData)
+      .then(() => {
+        alert('Booking updated successfully');
+        loadBookings();
+      })
+      .catch((error) => {
+        alert('Failed to update booking: ' + (error.response?.data?.error || error.message));
+      });
+  };
+
+  const handleCompleteBooking = async (bookingId) => {
+    if (!window.confirm('Mark this booking as completed?')) return;
+    
+    try {
+      await bookingService.completeBooking(bookingId);
+      alert('Booking marked as completed');
+      loadBookings();
+    } catch (error) {
+      alert('Failed to complete booking: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleFinalizeBooking = async (bookingId) => {
+    const notes = prompt('Enter finalization notes (optional):');
+    if (notes === null) return; // User cancelled
+    
+    try {
+      await bookingService.finalizeBooking(bookingId, notes || null);
+      alert('Booking finalized successfully');
+      loadBookings();
+    } catch (error) {
+      alert('Failed to finalize booking: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleRemoveAgent = async (agentId) => {
+    if (!window.confirm('Are you sure you want to remove agent status from this user?')) {
+      return;
+    }
+    try {
+      await api.post(`/api/admin/agents/${agentId}/remove`);
+      await loadAgents();
+      await loadDashboardData(); // Refresh stats
+    } catch (error) {
+      showToast('Failed to remove agent: ' + (error.response?.data?.error || error.message), 'error', 5000);
+    }
+  };
+
+  const handleApproveAgent = async (applicationId, adminNotes = null) => {
+    try {
+      await api.post(`/api/admin/agent-applications/${applicationId}/approve`, { adminNotes });
+      await loadAgentApplications();
+      await loadAgents(); // Refresh agents list
+      await loadDashboardData(); // Refresh stats
+    } catch (error) {
+      showToast('Failed to approve application: ' + (error.response?.data?.error || error.message), 'error', 5000);
+    }
+  };
+
+  const handleRejectAgent = async (applicationId, reason) => {
+    try {
+      await api.post(`/api/admin/agent-applications/${applicationId}/reject`, { 
+        reason: reason || 'Application rejected',
+        adminNotes: reason 
+      });
+      await loadAgentApplications();
+    } catch (error) {
+      showToast('Failed to reject application: ' + (error.response?.data?.error || error.message), 'error', 5000);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -268,7 +421,7 @@ const AdminDashboard = () => {
       }
       await loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to update featured status");
+      showToast(err.response?.data?.error || err.message || "Failed to update featured status", 'error', 5000);
     }
   };
 
@@ -282,7 +435,7 @@ const AdminDashboard = () => {
       }
       await loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to update pinned status");
+      showToast(err.response?.data?.error || err.message || "Failed to update pinned status", 'error', 5000);
     }
   };
 
@@ -293,7 +446,7 @@ const AdminDashboard = () => {
       await api.post(`/api/admin/users/${userId}/suspend`);
       loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to suspend user");
+      showToast(err.response?.data?.error || err.message || "Failed to suspend user", 'error', 5000);
     }
   };
 
@@ -302,7 +455,7 @@ const AdminDashboard = () => {
       await api.post(`/api/admin/users/${userId}/activate`);
       loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to activate user");
+      showToast(err.response?.data?.error || err.message || "Failed to activate user", 'error', 5000);
     }
   };
 
@@ -318,7 +471,7 @@ const AdminDashboard = () => {
       await api.delete(`/api/admin/users/${userId}`);
       loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to delete user");
+      showToast(err.response?.data?.error || err.message || "Failed to delete user", 'error', 5000);
     }
   };
 
@@ -370,7 +523,7 @@ const AdminDashboard = () => {
       const collection = await adminCollectionService.getAdminCollection(id);
       setViewingCollection(collection);
     } catch (err) {
-      alert(err.message || "Failed to load collection details");
+      showToast(err.response?.data?.error || err.message || "Failed to load collection details", 'error', 5000);
     }
   };
 
@@ -496,7 +649,7 @@ const AdminDashboard = () => {
       await adminCollectionService.deleteCollection(id);
       await loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to delete collection");
+      showToast(err.response?.data?.error || err.message || "Failed to delete collection", 'error', 5000);
     }
   };
 
@@ -570,8 +723,10 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
+    <>
+      <ToastContainer />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -1188,6 +1343,33 @@ const AdminDashboard = () => {
                         </span>
                       )}
                     </span>
+                  ) : tab === "bookings" ? (
+                    <span className="inline-flex items-center">
+                      bookings
+                      {bookingStats && (
+                        <span className="ml-2 inline-flex items-center justify-center min-w-[24px] h-5 px-2 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                          {bookingStats.totalBookings}
+                        </span>
+                      )}
+                    </span>
+                  ) : tab === "agents" ? (
+                    <span className="inline-flex items-center">
+                      agents
+                      {agents.length > 0 && (
+                        <span className="ml-2 inline-flex items-center justify-center min-w-[24px] h-5 px-2 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                          {agents.length}
+                        </span>
+                      )}
+                    </span>
+                  ) : tab === "agent-applications" ? (
+                    <span className="inline-flex items-center">
+                      agent applications
+                      {agentApplications.filter(a => a.status === 'PENDING').length > 0 && (
+                        <span className="ml-2 inline-flex items-center justify-center min-w-[24px] h-5 px-2 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                          {agentApplications.filter(a => a.status === 'PENDING').length}
+                        </span>
+                      )}
+                    </span>
                   ) : (
                     tab
                   )}
@@ -1204,6 +1386,7 @@ const AdminDashboard = () => {
             aria-labelledby="overview"
             className="space-y-8"
           >
+            {/* User Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <div className="flex items-center justify-between">
@@ -1212,7 +1395,7 @@ const AdminDashboard = () => {
                       Total Users
                     </p>
                     <p className="text-3xl font-bold text-gray-900 mt-2">
-                      {stats.totalUsers}
+                      {stats.users?.totalUsers || stats.totalUsers || 0}
                     </p>
                   </div>
                   <div className="bg-blue-100 p-3 rounded-lg">
@@ -1227,7 +1410,7 @@ const AdminDashboard = () => {
                       Active Users
                     </p>
                     <p className="text-3xl font-bold text-green-600 mt-2">
-                      {stats.activeUsers}
+                      {stats.users?.activeUsers || stats.activeUsers || 0}
                     </p>
                   </div>
                   <div className="bg-green-100 p-3 rounded-lg">
@@ -1242,7 +1425,7 @@ const AdminDashboard = () => {
                       Suspended
                     </p>
                     <p className="text-3xl font-bold text-red-600 mt-2">
-                      {stats.suspendedUsers}
+                      {stats.users?.suspendedUsers || stats.suspendedUsers || 0}
                     </p>
                   </div>
                   <div className="bg-red-100 p-3 rounded-lg">
@@ -1255,7 +1438,120 @@ const AdminDashboard = () => {
                   <div>
                     <p className="text-sm text-gray-600 font-medium">Pending</p>
                     <p className="text-3xl font-bold text-yellow-600 mt-2">
-                      {stats.pendingUsers}
+                      {stats.users?.pendingUsers || stats.pendingUsers || 0}
+                    </p>
+                  </div>
+                  <div className="bg-yellow-100 p-3 rounded-lg">
+                    <Clock className="text-yellow-600" size={28} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Booking & Payment Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Total Bookings
+                    </p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {stats.bookings?.totalBookings || 0}
+                    </p>
+                  </div>
+                  <div className="bg-purple-100 p-3 rounded-lg">
+                    <Briefcase className="text-purple-600" size={28} />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Confirmed
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      {stats.bookings?.confirmedBookings || 0}
+                    </p>
+                  </div>
+                  <div className="bg-green-100 p-3 rounded-lg">
+                    <CheckCircle className="text-green-600" size={28} />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Total Revenue
+                    </p>
+                    <p className="text-3xl font-bold text-blue-600 mt-2">
+                      ${(stats.payments?.totalRevenue || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="bg-blue-100 p-3 rounded-lg">
+                    <DollarSign className="text-blue-600" size={28} />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Paid Bookings
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      {stats.payments?.paidCount || 0}
+                    </p>
+                  </div>
+                  <div className="bg-green-100 p-3 rounded-lg">
+                    <CheckCircle className="text-green-600" size={28} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Agent Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Total Agents
+                    </p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {stats.agents?.totalAgents || 0}
+                    </p>
+                  </div>
+                  <div className="bg-indigo-100 p-3 rounded-lg">
+                    <Shield className="text-indigo-600" size={28} />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Active Agents
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      {stats.agents?.activeAgents || 0}
+                    </p>
+                  </div>
+                  <div className="bg-green-100 p-3 rounded-lg">
+                    <UserCheck className="text-green-600" size={28} />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Pending Applications
+                    </p>
+                    <p className="text-3xl font-bold text-yellow-600 mt-2">
+                      {stats.applications?.pendingApplications || 0}
                     </p>
                   </div>
                   <div className="bg-yellow-100 p-3 rounded-lg">
@@ -1728,6 +2024,377 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {activeTab === "bookings" && (
+          <div
+            id="panel-bookings"
+            role="tabpanel"
+            aria-labelledby="bookings"
+            className="bg-white rounded-xl shadow-lg border border-gray-200"
+          >
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Bookings Management</h2>
+                  <p className="text-gray-600 text-sm mt-1">View and manage all bookings</p>
+                </div>
+                {bookingStats && (
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-900">{bookingStats.totalBookings}</div>
+                      <div className="text-xs text-gray-600">Total</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">{bookingStats.pendingBookings}</div>
+                      <div className="text-xs text-gray-600">Pending</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{bookingStats.confirmedBookings}</div>
+                      <div className="text-xs text-gray-600">Confirmed</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6">
+              {loadingBookings ? (
+                <div className="text-center py-12">
+                  <Loader2 className="mx-auto animate-spin text-purple-600" size={48} />
+                  <p className="mt-4 text-gray-600">Loading bookings...</p>
+                </div>
+              ) : bookings.length === 0 ? (
+                <div className="text-center py-12">
+                  <Calendar className="mx-auto text-gray-400 mb-4" size={48} />
+                  <p className="text-gray-500 font-medium">No bookings yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {bookings.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-semibold text-gray-900">{booking.destination.name}</h4>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+                              booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {booking.status}
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              booking.bookingType === 'AGENT' ? 'bg-purple-100 text-purple-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {booking.bookingType}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1 mb-2">
+                            <div className="flex items-center gap-2">
+                              <MapPin size={14} />
+                              {booking.destination.city}, {booking.destination.country}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar size={14} />
+                              {booking.checkInDate} {booking.checkOutDate && `- ${booking.checkOutDate}`}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users size={14} />
+                              {booking.numberOfGuests} guests
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Customer: {booking.user.email} | Reference: <span className="font-mono">{booking.bookingReference}</span>
+                          </div>
+                          {booking.agent && (
+                            <div className="text-xs text-purple-600 mt-1">
+                              Agent: {booking.agent.email}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right ml-4">
+                          <div className="text-xl font-bold text-gray-900 mb-2">${booking.totalPrice}</div>
+                          <div className="text-xs text-gray-500">{booking.paymentStatus}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
+                        {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && (
+                          <button
+                            onClick={() => handleEditBooking(booking)}
+                            className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
+                          >
+                            <Pencil size={14} />
+                            Edit
+                          </button>
+                        )}
+                        {booking.status === 'CONFIRMED' && (
+                          <button
+                            onClick={() => handleCompleteBooking(booking.id)}
+                            className="px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition flex items-center gap-1"
+                          >
+                            <CheckCircle size={14} />
+                            Complete
+                          </button>
+                        )}
+                        {(booking.status === 'CONFIRMED' || booking.status === 'PENDING') && (
+                          <button
+                            onClick={() => handleFinalizeBooking(booking.id)}
+                            className="px-3 py-1.5 text-sm bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition flex items-center gap-1"
+                          >
+                            <Check size={14} />
+                            Finalize
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "agents" && (
+          <div
+            id="panel-agents"
+            role="tabpanel"
+            aria-labelledby="agents"
+            className="bg-white rounded-xl shadow-lg border border-gray-200"
+          >
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Agent Management</h2>
+                  <p className="text-gray-600 text-sm mt-1">Manage travel agents and their status</p>
+                </div>
+                {agents.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 border border-purple-200">
+                      Total Agents: {agents.length}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6">
+              {loadingAgents ? (
+                <div className="text-center py-12">
+                  <Loader2 className="mx-auto animate-spin text-purple-600" size={48} />
+                  <p className="mt-4 text-gray-600">Loading agents...</p>
+                </div>
+              ) : agents.length === 0 ? (
+                <div className="text-center py-12">
+                  <Briefcase className="mx-auto text-gray-400 mb-4" size={48} />
+                  <p className="text-gray-500 font-medium">No agents registered yet</p>
+                  <p className="text-sm text-gray-400 mt-2">Agents will appear here after their applications are approved</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {agents.map((agent) => (
+                    <div
+                      key={agent.id}
+                      className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-semibold text-gray-900">
+                              {agent.firstName} {agent.lastName}
+                            </h4>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              agent.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                              agent.status === 'SUSPENDED' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {agent.status}
+                            </span>
+                            {agent.isVerified && (
+                              <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-700">
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600 mb-3">
+                            <div>Email: {agent.email}</div>
+                            {agent.phone && <div>Phone: {agent.phone}</div>}
+                            {agent.application && (
+                              <div className="mt-3 p-3 bg-purple-50 rounded">
+                                <div className="font-semibold mb-2">Application Details:</div>
+                                {agent.application.companyName && (
+                                  <div>Company: {agent.application.companyName}</div>
+                                )}
+                                {agent.application.licenseNumber && (
+                                  <div>License: {agent.application.licenseNumber}</div>
+                                )}
+                                {agent.application.yearsExperience && (
+                                  <div>Experience: {agent.application.yearsExperience} years</div>
+                                )}
+                                {agent.application.specializations && agent.application.specializations.length > 0 && (
+                                  <div className="mt-2">
+                                    <span className="font-semibold">Specializations: </span>
+                                    {agent.application.specializations.join(', ')}
+                                  </div>
+                                )}
+                                <div className="mt-2">
+                                  <span className="font-semibold">Application Status: </span>
+                                  <span className={`px-2 py-1 rounded text-xs ${
+                                    agent.application.applicationStatus === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                    agent.application.applicationStatus === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                    'bg-yellow-100 text-yellow-700'
+                                  }`}>
+                                    {agent.application.applicationStatus}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Registered: {agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 ml-4">
+                          <button
+                            onClick={() => handleRemoveAgent(agent.id)}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                          >
+                            <X size={16} className="inline mr-1" />
+                            Remove Agent
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "agent-applications" && (
+          <div
+            id="panel-agent-applications"
+            role="tabpanel"
+            aria-labelledby="agent-applications"
+            className="bg-white rounded-xl shadow-lg border border-gray-200"
+          >
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Agent Applications</h2>
+                  <p className="text-gray-600 text-sm mt-1">Review and approve agent applications</p>
+                </div>
+                {agentApplications.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-700 border border-yellow-200">
+                      Pending: {agentApplications.filter(a => a.status === 'PENDING').length}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6">
+              {loadingApplications ? (
+                <div className="text-center py-12">
+                  <Loader2 className="mx-auto animate-spin text-purple-600" size={48} />
+                  <p className="mt-4 text-gray-600">Loading applications...</p>
+                </div>
+              ) : agentApplications.length === 0 ? (
+                <div className="text-center py-12">
+                  <Briefcase className="mx-auto text-gray-400 mb-4" size={48} />
+                  <p className="text-gray-500 font-medium">No agent applications yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {agentApplications.map((application) => (
+                    <div
+                      key={application.id}
+                      className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-semibold text-gray-900">
+                              {application.firstName || application.user?.firstName || ''} {application.lastName || application.user?.lastName || ''}
+                            </h4>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              application.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                              application.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {application.status}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 mb-3">
+                            <div>Email: {application.email || application.user?.email}</div>
+                            {application.companyName && <div>Company: {application.companyName}</div>}
+                            {application.licenseNumber && <div>License: {application.licenseNumber}</div>}
+                            {application.yearsExperience && <div>Experience: {application.yearsExperience} years</div>}
+                            {application.specializations && application.specializations.length > 0 && (
+                              <div className="mt-2">
+                                <span className="font-semibold">Specializations: </span>
+                                {application.specializations.join(', ')}
+                              </div>
+                            )}
+                            {application.motivation && (
+                              <div className="mt-2 p-3 bg-blue-50 rounded">
+                                <span className="font-semibold">Motivation: </span>
+                                <p className="text-sm">{application.motivation}</p>
+                              </div>
+                            )}
+                            {application.adminNotes && (
+                              <div className="mt-2 p-3 bg-gray-50 rounded">
+                                <span className="font-semibold">Admin Notes: </span>
+                                <p className="text-sm">{application.adminNotes}</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Applied: {new Date(application.createdAt).toLocaleDateString()}
+                            {application.reviewedAt && (
+                              <> | Reviewed: {new Date(application.reviewedAt).toLocaleDateString()}</>
+                            )}
+                          </div>
+                        </div>
+                        {application.status === 'PENDING' && (
+                          <div className="flex flex-col gap-2 ml-4">
+                            <button
+                              onClick={() => {
+                                const notes = prompt('Add admin notes (optional):');
+                                handleApproveAgent(application.id, notes);
+                              }}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                            >
+                              <CheckCircle size={16} className="inline mr-1" />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                const reason = prompt('Rejection reason:');
+                                if (reason) {
+                                  handleRejectAgent(application.id, reason);
+                                }
+                              }}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                            >
+                              <X size={16} className="inline mr-1" />
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === "users" && (
           <div
             id="panel-users"
@@ -1904,6 +2571,7 @@ const AdminDashboard = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

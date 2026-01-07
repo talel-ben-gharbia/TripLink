@@ -18,6 +18,14 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const searchTimeoutRef = useRef(null);
   const suggestionsRef = useRef(null);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('triplink.searchHistory');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const popularDestinations = ['Paris', 'Tokyo', 'Bali', 'New York', 'Dubai', 'Barcelona'];
 
@@ -66,6 +74,17 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
   const handleSearch = () => {
     setSearching(true);
     const payload = { destination, checkIn, checkOut, guests, budgetMin, budgetMax };
+    
+    // Save to search history
+    if (destination.trim()) {
+      const newHistory = [
+        { query: destination.trim(), timestamp: Date.now() },
+        ...searchHistory.filter(h => h.query.toLowerCase() !== destination.trim().toLowerCase())
+      ].slice(0, 10); // Keep last 10 searches
+      setSearchHistory(newHistory);
+      localStorage.setItem('triplink.searchHistory', JSON.stringify(newHistory));
+    }
+    
     setTimeout(() => {
       setSearching(false);
       onSearch && onSearch(payload);
@@ -129,7 +148,23 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
                     <div className="p-4 text-center text-sm text-gray-500">No suggestions found</div>
                   ) : (
                     <div className="p-2">
-                      <div className="text-xs text-gray-500 mb-2 px-2">Popular destinations</div>
+                      {searchHistory.length > 0 && (
+                        <>
+                          <div className="text-xs text-gray-500 mb-2 px-2 font-semibold">Recent Searches</div>
+                          {searchHistory.slice(0, 5).map((item, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => { setDestination(item.query); setShowSuggestions(false); }}
+                              className="px-3 py-2 hover:bg-purple-50 rounded cursor-pointer flex items-center space-x-2 transition-colors"
+                            >
+                              <MapPin size={14} className="text-purple-600" />
+                              <span className="text-sm text-gray-700">{item.query}</span>
+                            </div>
+                          ))}
+                          <div className="border-t my-2" />
+                        </>
+                      )}
+                      <div className="text-xs text-gray-500 mb-2 px-2 font-semibold">Popular destinations</div>
                       {popularDestinations.map((dest, idx) => (
                         <div
                           key={idx}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
 import Navbar from '../Component/Navbar';
 import Footer from '../Component/Footer';
+import SEO from '../Component/SEO';
 import { getCollections } from '../services/collectionService';
 
 /**
@@ -34,6 +35,10 @@ const Collections = () => {
 
   return (
     <div className="min-h-screen page-bg flex flex-col">
+      <SEO 
+        title="Curated Collections - TripLink | Handpicked Destinations"
+        description="Discover handpicked destination collections for every type of traveler. Seasonal, themed, and featured collections curated by travel experts."
+      />
       <Navbar />
       <div className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">

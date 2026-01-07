@@ -1,3 +1,13 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin/
+Disallow: /agent/
+Disallow: /api/
+Disallow: /settings
+Disallow: /profile
+Disallow: /bookings
+Disallow: /wishlist
+
+# Sitemap
+Sitemap: https://triplink.com/sitemap.xml

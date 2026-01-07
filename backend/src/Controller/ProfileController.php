@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use App\Repository\WishlistItemRepository;
 use App\Repository\DestinationReviewRepository;
 use App\Repository\ActivityLogRepository;
+use App\Repository\BookingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -289,7 +290,8 @@ class ProfileController extends AbstractController
     public function getMyActivity(
         DestinationReviewRepository $reviewRepo,
         WishlistItemRepository $wishlistRepo,
-        ActivityLogRepository $activityLogRepo
+        ActivityLogRepository $activityLogRepo,
+        BookingRepository $bookingRepo
     ): JsonResponse {
         $user = $this->getUser();
         
@@ -301,6 +303,12 @@ class ProfileController extends AbstractController
         $reviews = $reviewRepo->findByUser($user, 10);
         $wishlistCount = $wishlistRepo->countByUser($user);
         $reviewCount = $reviewRepo->countByUser($user);
+        
+        // Get booking statistics
+        $allBookings = $bookingRepo->findByUser($user);
+        $totalBookings = count($allBookings);
+        $confirmedBookings = count(array_filter($allBookings, fn($b) => $b->getStatus() === 'CONFIRMED'));
+        $completedBookings = count(array_filter($allBookings, fn($b) => $b->getStatus() === 'COMPLETED'));
 
         // Calculate average rating given
         $avgRatingGiven = null;
@@ -319,6 +327,12 @@ class ProfileController extends AbstractController
                 'delete_review' => 'Deleted review',
                 'add_wishlist' => 'Added to wishlist',
                 'remove_wishlist' => 'Removed from wishlist',
+                'create_booking' => 'Created booking',
+                'confirm_booking' => 'Confirmed booking',
+                'cancel_booking' => 'Cancelled booking',
+                'update_booking' => 'Updated booking',
+                'complete_booking' => 'Completed booking',
+                'finalize_booking' => 'Finalized booking',
             ];
             
             return [
@@ -340,6 +354,9 @@ class ProfileController extends AbstractController
                 'totalWishlistItems' => $wishlistCount,
                 'averageRatingGiven' => $avgRatingGiven,
                 'totalViews' => $activityLogRepo->countByActionType($user, 'view_destination'),
+                'totalBookings' => $totalBookings,
+                'confirmedBookings' => $confirmedBookings,
+                'completedBookings' => $completedBookings,
             ],
             'recentReviews' => array_map(function ($review) {
                 $destination = $review->getDestination();

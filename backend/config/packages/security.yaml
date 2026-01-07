@@ -64,6 +64,10 @@ security:
         - { path: ^/api/destinations/recommended, roles: ROLE_USER }
         - { path: ^/api/wishlist, roles: ROLE_USER }
         - { path: ^/api/onboarding, roles: ROLE_USER }  # Phase 1: Onboarding flow
+        - { path: ^/api/documents, roles: ROLE_USER }  # Travel documents management
+        - { path: ^/api/stats/public, roles: PUBLIC_ACCESS }  # Public statistics
+        - { path: ^/api/faq, roles: PUBLIC_ACCESS }  # Public FAQs
+        - { path: ^/api/testimonials, roles: PUBLIC_ACCESS }  # Public testimonials
         - { path: ^/user, roles: ROLE_USER }
         
         # Public destination browsing

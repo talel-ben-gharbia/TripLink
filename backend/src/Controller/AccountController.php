@@ -140,5 +140,61 @@ class AccountController extends AbstractController
 
         return new JsonResponse(['message' => 'Password changed successfully'], 200);
     }
+
+    /**
+     * Force password change (for agents who must change password on first login)
+     *
+     * @param Request $request
+     * @param UserPasswordHasherInterface $passwordHasher
+     * @param EntityManagerInterface $em
+     * @param EmailService $emailService
+     * @param \App\Service\ValidationService $validationService
+     * @return JsonResponse
+     */
+    #[Route('/api/account/force-change-password', name: 'api_account_force_change_password', methods: ['POST'])]
+    public function forceChangePassword(
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher,
+        EntityManagerInterface $em,
+        EmailService $emailService,
+        \App\Service\ValidationService $validationService
+    ): JsonResponse {
+        $user = $this->getUser();
+
+        if (!$user || !$user instanceof User) {
+            return new JsonResponse(['error' => 'Not authenticated'], 401);
+        }
+
+        if (!$user->mustChangePassword()) {
+            return new JsonResponse(['error' => 'Password change is not required'], 400);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!isset($data['newPassword'])) {
+            return new JsonResponse(['error' => 'New password is required'], 400);
+        }
+
+        // Validate new password
+        $passwordValidation = $validationService->validatePassword($data['newPassword']);
+        if (!$passwordValidation['valid']) {
+            return new JsonResponse([
+                'error' => 'Password validation failed',
+                'errors' => $passwordValidation['errors']
+            ], 400);
+        }
+
+        // Update password and clear mustChangePassword flag
+        $user->setPassword($passwordHasher->hashPassword($user, $data['newPassword']));
+        $user->setMustChangePassword(false);
+        // Invalidate old tokens
+        $user->setTokenVersion($user->getTokenVersion() + 1);
+
+        $em->flush();
+
+        // Notify user
+        $emailService->sendPasswordChangedEmail($user);
+
+        return new JsonResponse(['message' => 'Password changed successfully'], 200);
+    }
 }
 

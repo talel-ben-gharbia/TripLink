@@ -19,6 +19,7 @@ export default function RegisterForm({
   toggleSelection,
   interests,
   handleInput,
+  onOpenAgentForm,
 }) {
   return (
     <>
@@ -370,6 +371,19 @@ export default function RegisterForm({
           Sign In
         </button>
       </p>
+      
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <p className="text-sm text-gray-600 text-center mb-2">
+          Are you a travel agent?
+        </p>
+        <button
+          type="button"
+          onClick={onOpenAgentForm}
+          className="w-full text-sm text-purple-600 font-semibold hover:text-purple-700 hover:underline"
+        >
+          Apply as Travel Agent
+        </button>
+      </div>
     </>
   );
 }

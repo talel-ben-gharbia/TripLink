@@ -11,11 +11,15 @@ import Footer from "../Component/Footer";
 import CollectionsSection from "../Component/CollectionsSection";
 import Onboarding from "../Component/Onboarding";
 import PublicReviewsSection from "../Component/PublicReviewsSection";
+import SEO from "../Component/SEO";
 import { AlertCircle, Headphones, ArrowUp, MapPin, Star, Sparkles } from "lucide-react";
 import { useErrorToast } from "../Component/ErrorToast";
 import api from "../api";
 import { getFeaturedDestinations } from "../services/destinationService";
+import { getRecommendations } from "../services/recommendationService";
 import { API_URL } from "../config";
+import DestinationCard from "../Component/DestinationCard";
+import { trackPageView } from "../utils/analytics";
 
 
 function Home() {
@@ -28,6 +32,8 @@ function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [featuredDestinations, setFeaturedDestinations] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   // Check backend connection on mount
   useEffect(() => {
@@ -95,13 +101,52 @@ function Home() {
     const loadFeatured = async () => {
       try {
         const data = await getFeaturedDestinations();
-        setFeaturedDestinations(Array.isArray(data) ? data.slice(0, 6) : []);
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          setFeaturedDestinations(data.slice(0, 6));
+        } else if (data.destinations && Array.isArray(data.destinations)) {
+          setFeaturedDestinations(data.destinations.slice(0, 6));
+        } else if (data.data && Array.isArray(data.data)) {
+          setFeaturedDestinations(data.data.slice(0, 6));
+        } else {
+          setFeaturedDestinations([]);
+        }
       } catch (error) {
         console.error('Failed to load featured destinations:', error);
+        setFeaturedDestinations([]);
       }
     };
     loadFeatured();
   }, []);
+
+  // Load personalized recommendations for logged-in users
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || !user) return;
+
+      setRecommendationsLoading(true);
+      try {
+        const data = await getRecommendations(6);
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          setRecommendations(data);
+        } else if (data.recommendations && Array.isArray(data.recommendations)) {
+          setRecommendations(data.recommendations);
+        } else if (data.destinations && Array.isArray(data.destinations)) {
+          setRecommendations(data.destinations.map(d => ({ destination: d })));
+        } else {
+          setRecommendations([]);
+        }
+      } catch (error) {
+        console.error('Failed to load recommendations:', error);
+        setRecommendations([]);
+      } finally {
+        setRecommendationsLoading(false);
+      }
+    };
+    loadRecommendations();
+  }, [user]);
 
 
   useEffect(() => {
@@ -127,10 +172,10 @@ function Home() {
     // Check email verification
     const emailVerification = searchParams.get("emailVerification");
     if (emailVerification === "success") {
-      alert("Email verified successfully! You can now login.");
+      showToast("Email verified successfully! You can now login.", "success", 5000);
       setIsOpen(true);
     } else if (emailVerification === "error") {
-      alert("Email verification failed. Please try again or contact support.");
+      showToast("Email verification failed. Please try again or contact support.", "error", 5000);
     }
   }, [searchParams]);
 
@@ -161,8 +206,18 @@ function Home() {
 
 
 
+  // Track page view for analytics
+  useEffect(() => {
+    trackPageView('/');
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-purple-50 to-white" id="main-content">
+      <SEO 
+        title="TripLink - Intelligent Travel Companion | Discover Amazing Destinations"
+        description="Discover and book amazing travel destinations with TripLink. Get personalized recommendations, intelligent routing, and professional travel services. Start your journey today!"
+        keywords="travel booking, vacation planning, destinations, travel agent, intelligent routing, personalized travel"
+      />
 
       <div className="relative z-10 h-full overflow-y-auto scrollbar-hide">
         <div className="fixed top-0 left-0 h-1 z-50" style={{ width: `${scrollProgress * 100}%`, backgroundImage: 'linear-gradient(90deg, #7c3aed, #2563eb, #06b6d4)' }} aria-hidden="true" />
@@ -301,6 +356,99 @@ function Home() {
         <div className="container mx-auto px-4 my-12">
           <div className="section-divider" aria-hidden="true" />
         </div>
+
+        {/* Personalized Recommendations Section (for logged-in users) */}
+        {user && recommendations.length > 0 && (
+          <>
+            <section className="container mx-auto px-4 py-12 lg:py-16">
+              <div className="mb-8 lg:mb-12 text-center">
+                <h2 className="text-4xl lg:text-5xl font-bold brand-gradient-text mb-3 section-title flex items-center justify-center gap-3">
+                  <Sparkles className="text-purple-600" size={32} />
+                  Recommended For You
+                </h2>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  Destinations tailored to your preferences and travel history
+                </p>
+              </div>
+              {recommendationsLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="rounded-2xl overflow-hidden border bg-white animate-pulse">
+                      <div className="h-64 bg-gray-200" />
+                      <div className="p-6 space-y-3">
+                        <div className="h-6 w-2/3 bg-gray-200 rounded" />
+                        <div className="h-4 w-1/2 bg-gray-200 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {recommendations.map((rec, idx) => (
+                    <div
+                      key={rec.destination.id}
+                      onClick={() => window.location.href = `/destinations/${rec.destination.id}`}
+                      className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 animate-fade-up relative"
+                      style={{ animationDelay: `${idx * 100}ms` }}
+                    >
+                      {rec.destination.image && (
+                        <div className="h-56 lg:h-64 overflow-hidden relative">
+                          <img 
+                            src={rec.destination.image} 
+                            alt={rec.destination.name} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                            loading="lazy"
+                            onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&auto=format&fit=crop&q=80'; }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          {rec.score && (
+                            <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg z-10">
+                              Score: {typeof rec.score === 'number' ? rec.score.toFixed(0) : rec.score}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="p-6">
+                        <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">{rec.destination.name}</h3>
+                        <p className="text-gray-600 text-sm mb-4 flex items-center gap-1">
+                          <MapPin size={14} className="text-gray-400" />
+                          <span>{rec.destination.city ? `${rec.destination.city}, ${rec.destination.country}` : rec.destination.country}</span>
+                        </p>
+                        {rec.reasons && Array.isArray(rec.reasons) && rec.reasons.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-xs text-gray-500 mb-2">Why we recommend this:</p>
+                            <ul className="text-xs text-gray-600 space-y-1">
+                              {rec.reasons.slice(0, 2).map((reason, i) => (
+                                <li key={i} className="flex items-center gap-1">
+                                  <span className="text-purple-600">•</span>
+                                  <span>{reason}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {rec.destination.rating && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center">
+                              <Star size={16} className="text-yellow-500 fill-current" />
+                              <span className="font-semibold text-gray-900 ml-1">{rec.destination.rating.toFixed(1)}</span>
+                            </div>
+                            {rec.destination.priceMin && (
+                              <span className="text-purple-600 font-semibold">From ${rec.destination.priceMin}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+            <div className="container mx-auto px-4 my-12">
+              <div className="section-divider" aria-hidden="true" />
+            </div>
+          </>
+        )}
 
         {/* Collections Section */}
         <CollectionsSection limit={3} />

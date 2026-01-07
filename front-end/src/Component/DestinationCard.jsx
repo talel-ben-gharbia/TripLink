@@ -36,7 +36,7 @@ const DestinationCard = ({ destination, onWishlistChange, selectable = false, se
   };
 
   return (
-    <div className={`group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border-2 ${selected ? 'border-purple-400' : 'border-transparent hover:border-purple-300'}`}>
+    <div className={`group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border-2 animate-fade-up ${selected ? 'border-purple-400 ring-2 ring-purple-200' : 'border-transparent hover:border-purple-300'}`}>
       <div className="relative h-64 overflow-hidden">
         <img
           src={imageUrl}
@@ -46,11 +46,22 @@ const DestinationCard = ({ destination, onWishlistChange, selectable = false, se
           onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1493558103817-58b2924bce98?w=1200&auto=format&fit=crop&q=80'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <button onClick={toggleWishlist} className={`absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform ${wishlisted ? 'text-red-500' : 'text-gray-400'}`}>
+        <button 
+          onClick={toggleWishlist} 
+          className={`absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform ${wishlisted ? 'text-red-500' : 'text-gray-400'}`}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          title={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
           <Heart size={18} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
         {selectable && (
-          <button type="button" onClick={onSelectToggle} className={`absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg z-20 ${selected ? 'text-purple-600' : 'text-gray-500'}`}>
+          <button 
+            type="button" 
+            onClick={onSelectToggle} 
+            className={`absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg z-20 ${selected ? 'text-purple-600' : 'text-gray-500'}`}
+            aria-label={selected ? 'Deselect destination' : 'Select destination for comparison'}
+            aria-pressed={selected}
+          >
             <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">
               {selected && <span className="w-2 h-2 bg-current rounded-full" />}
             </span>
@@ -90,7 +101,13 @@ const DestinationCard = ({ destination, onWishlistChange, selectable = false, se
             <span className="text-3xl font-bold text-purple-700">{destination.priceMin ? `$${destination.priceMin}` : destination.price ? `$${destination.price}` : ''}</span>
             <span className="text-gray-600">{destination.priceMin || destination.price ? ' / night' : ''}</span>
           </div>
-          <button onClick={() => navigate(`/destinations/${destination.id}`)} className="px-5 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 transition shadow-md flex items-center space-x-1"><span>View</span><ArrowRight size={14} /></button>
+          <button 
+            onClick={() => navigate(`/destinations/${destination.id}`)} 
+            className="px-5 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 flex items-center space-x-1 font-semibold"
+            aria-label={`View details for ${destination.name}`}
+          >
+            <span>View</span><ArrowRight size={14} />
+          </button>
         </div>
       </div>
     </div>

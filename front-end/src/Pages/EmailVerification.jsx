@@ -4,6 +4,8 @@ import { CheckCircle, XCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import Navbar from "../Component/Navbar";
 import Footer from "../Component/Footer";
 import { API_URL } from "../config";
+import { useErrorToast } from "../Component/ErrorToast";
+import SEO from "../Component/SEO";
 
 function EmailVerification() {
   const [searchParams] = useSearchParams();
@@ -12,6 +14,7 @@ function EmailVerification() {
   const message = searchParams.get("message");
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
+  const { showToast, ToastContainer } = useErrorToast();
 
   useEffect(() => {
     if (status === "success") {
@@ -25,7 +28,7 @@ function EmailVerification() {
     const email =
       searchParams.get("email") || localStorage.getItem("pendingEmail");
     if (!email) {
-      alert("Email not found. Please register again.");
+      showToast("Email not found. Please register again.", "error", 5000);
       return;
     }
 
@@ -43,19 +46,18 @@ function EmailVerification() {
 
       const data = await res.json();
       if (res.ok) {
-        setResendMessage(
-          data.message || "Verification email sent successfully!"
-        );
-        alert(data.message || "Verification email sent successfully!");
+        const successMsg = data.message || "Verification email sent successfully!";
+        setResendMessage(successMsg);
+        showToast(successMsg, "success", 5000);
       } else {
-        alert(data.error || "Failed to resend verification email");
+        showToast(data.error || "Failed to resend verification email", "error", 5000);
       }
     } catch (err) {
       console.error("Resend error:", err);
       const errorMsg =
         err.message ||
         `Cannot connect to server. Please make sure the backend is running on ${API_URL}`;
-      alert(errorMsg);
+      showToast(errorMsg, "error", 5000);
     } finally {
       setResending(false);
     }
@@ -63,6 +65,11 @@ function EmailVerification() {
 
   return (
     <div className="min-h-screen page-bg flex flex-col">
+      <SEO 
+        title="Email Verification - TripLink"
+        description="Verify your email address to complete your TripLink account registration"
+      />
+      <ToastContainer />
       <Navbar />
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="max-w-md w-full glass-card p-8">

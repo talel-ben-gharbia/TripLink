@@ -109,16 +109,19 @@ class AuthController extends AbstractController
         }
 
         $profile = $result['user']->getProfile();
+        $user = $result['user'];
         $response = new JsonResponse([
             'token' => $result['token'],
             'user' => [
-                'id' => $result['user']->getId(),
-                'email' => $result['user']->getEmail(),
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
                 'firstName' => $profile?->getFirstName(),
                 'lastName' => $profile?->getLastName(),
-                'roles' => $result['user']->getRoles(),
-                'isVerified' => $result['user']->isVerified(),
-                'isAdmin' => $result['user']->isAdmin(),
+                'roles' => $user->getRoles(),
+                'isVerified' => $user->isVerified(),
+                'isAdmin' => $user->isAdmin(),
+                'isAgent' => $user->isAgent(),
+                'mustChangePassword' => $user->mustChangePassword(),
             ]
         ]);
         // Set refresh-token cookie (7 days, HttpOnly; SameSite=None for dev across ports)

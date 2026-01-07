@@ -23,13 +23,21 @@ import {
   Lock,
   Edit,
   Trash2,
+  Calendar,
+  Briefcase,
+  Users,
+  DollarSign,
+  XCircle,
 } from "lucide-react";
 
 import Navbar from "../Component/Navbar";
 import { API_URL } from "../config";
+import * as bookingService from "../services/bookingService";
+import { useErrorToast } from "../Component/ErrorToast";
 
 function TravelerProfile() {
   const navigate = useNavigate();
+  const { showToast, ToastContainer } = useErrorToast();
   const [user, setUser] = useState(null);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
@@ -39,6 +47,8 @@ function TravelerProfile() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [activity, setActivity] = useState(null);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [bookings, setBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [preferencesSubTab, setPreferencesSubTab] = useState("personality");
   const [settingsSubTab, setSettingsSubTab] = useState("account");
@@ -56,6 +66,7 @@ function TravelerProfile() {
   const tabs = useMemo(
     () => [
       "overview",
+      "bookings",
       "preferences",
       "wishlist",
       "reviews",
@@ -136,7 +147,7 @@ function TravelerProfile() {
       return;
     }
 
-      fetch(`${API_URL}/api/profile`, {
+    fetch(`${API_URL}/api/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -190,6 +201,26 @@ function TravelerProfile() {
       })
       .catch((err) => console.error("Failed to load profile:", err));
   }, []);
+
+  // Load bookings when bookings tab is active
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || !user) return;
+
+    if (activeTab === "bookings") {
+      setBookingsLoading(true);
+      bookingService
+        .getMyBookings()
+        .then((data) => {
+          setBookings(Array.isArray(data.bookings) ? data.bookings : []);
+        })
+        .catch((err) => {
+          console.error("Failed to load bookings:", err);
+          setBookings([]);
+        })
+        .finally(() => setBookingsLoading(false));
+    }
+  }, [activeTab, user]);
 
   const handleTabKeyDown = useCallback(
     (e) => {
@@ -315,10 +346,15 @@ function TravelerProfile() {
       if (res.ok) {
         setUser(data.user || { ...user, ...accountData });
       } else {
-        alert(data.error || "Failed to update account");
+        showToast(data.error || "Failed to update account", "error", 5000);
       }
     } catch (err) {
-      alert("Network error updating account");
+      showToast(
+        "Network error updating account: " +
+          (err.message || "Please try again"),
+        "error",
+        5000
+      );
     }
   };
 
@@ -342,11 +378,16 @@ function TravelerProfile() {
           ...u,
           profileImage: data.user?.profileImage || u.profileImage,
         }));
+        showToast("Avatar updated successfully!", "success", 3000);
       } else {
-        alert(data.error || "Failed to update avatar");
+        showToast(data.error || "Failed to update avatar", "error", 5000);
       }
     } catch (err) {
-      alert("Failed to update avatar");
+      showToast(
+        "Failed to update avatar: " + (err.message || "Please try again"),
+        "error",
+        5000
+      );
     }
   };
 
@@ -614,6 +655,7 @@ function TravelerProfile() {
     <>
       <div className="min-h-screen page-bg">
         <Navbar openAuth={() => {}} />
+        <ToastContainer />
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <div className="glass-card p-8 mb-8 glass-ring ambient-glow animate-fade-up">
             <div className="flex items-center justify-between mb-8">
@@ -815,6 +857,27 @@ function TravelerProfile() {
                               </p>
                             </div>
                           </div>
+                          {user.isAgent && (
+                            <div className="mt-6 bg-green-50 rounded-xl p-6 border border-green-200">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h4 className="text-lg font-bold text-gray-900 mb-1">
+                                    Travel Agent
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    You're an approved agent. Manage bookings
+                                    and help travelers.
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => navigate("/agent/dashboard")}
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+                                >
+                                  Go to Dashboard
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1150,6 +1213,155 @@ function TravelerProfile() {
                                 </div>
                               </div>
                             </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === "bookings" && (
+                      <div
+                        id="panel-bookings"
+                        role="tabpanel"
+                        aria-labelledby="bookings"
+                        className="space-y-6"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                              My Bookings
+                            </h2>
+                            <p className="text-gray-600">
+                              View and manage your travel bookings
+                            </p>
+                          </div>
+                        </div>
+                        {bookingsLoading ? (
+                          <div className="text-center py-8 text-gray-600">
+                            Loading bookings...
+                          </div>
+                        ) : bookings.length === 0 ? (
+                          <div className="bg-white/70 rounded-xl p-8 border border-white/40 text-center">
+                            <Briefcase
+                              className="mx-auto text-gray-400 mb-4"
+                              size={48}
+                            />
+                            <p className="text-gray-700">No bookings yet.</p>
+                            <button
+                              onClick={() => navigate("/")}
+                              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                            >
+                              Browse Destinations
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {bookings.map((booking) => (
+                              <div
+                                key={booking.id}
+                                className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <h3 className="text-lg font-bold text-gray-900">
+                                        {booking.destination?.name ||
+                                          "Unknown Destination"}
+                                      </h3>
+                                      <span
+                                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                          booking.status === "CONFIRMED"
+                                            ? "bg-green-100 text-green-700"
+                                            : booking.status === "PENDING"
+                                            ? "bg-yellow-100 text-yellow-700"
+                                            : booking.status === "CANCELLED"
+                                            ? "bg-red-100 text-red-700"
+                                            : booking.status === "COMPLETED"
+                                            ? "bg-blue-100 text-blue-700"
+                                            : "bg-gray-100 text-gray-700"
+                                        }`}
+                                      >
+                                        {booking.status}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                      <div className="flex items-center gap-2">
+                                        <MapPin
+                                          size={16}
+                                          className="text-purple-600"
+                                        />
+                                        <span>
+                                          {booking.destination?.city},{" "}
+                                          {booking.destination?.country}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Calendar
+                                          size={16}
+                                          className="text-purple-600"
+                                        />
+                                        <span>
+                                          {booking.checkInDate}
+                                          {booking.checkOutDate &&
+                                            ` - ${booking.checkOutDate}`}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Users
+                                          size={16}
+                                          className="text-purple-600"
+                                        />
+                                        <span>
+                                          {booking.numberOfGuests} guest
+                                          {booking.numberOfGuests !== 1
+                                            ? "s"
+                                            : ""}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <DollarSign
+                                          size={16}
+                                          className="text-purple-600"
+                                        />
+                                        <span className="font-semibold text-gray-900">
+                                          ${booking.totalPrice}
+                                        </span>
+                                        <span
+                                          className={`ml-2 px-2 py-0.5 rounded text-xs ${
+                                            booking.paymentStatus === "PAID"
+                                              ? "bg-green-100 text-green-700"
+                                              : booking.paymentStatus ===
+                                                "PENDING"
+                                              ? "bg-yellow-100 text-yellow-700"
+                                              : booking.paymentStatus ===
+                                                "REFUNDED"
+                                              ? "bg-blue-100 text-blue-700"
+                                              : "bg-red-100 text-red-700"
+                                          }`}
+                                        >
+                                          {booking.paymentStatus}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    {booking.bookingReference && (
+                                      <div className="mt-3 text-xs text-gray-500">
+                                        Reference:{" "}
+                                        <span className="font-mono">
+                                          {booking.bookingReference}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="ml-4">
+                                    <button
+                                      onClick={() => navigate("/bookings")}
+                                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
+                                    >
+                                      View Details
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1582,6 +1794,24 @@ function TravelerProfile() {
                                   </div>
                                 </div>
                               </div>
+                              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                    <Briefcase
+                                      className="text-indigo-600"
+                                      size={24}
+                                    />
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-gray-500">
+                                      Total Bookings
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">
+                                      {activity.stats?.totalBookings || 0}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
 
                             <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
@@ -1684,6 +1914,28 @@ function TravelerProfile() {
                                               className="text-gray-400"
                                             />
                                           )}
+                                          {(log.actionType ===
+                                            "create_booking" ||
+                                            log.actionType ===
+                                              "confirm_booking" ||
+                                            log.actionType ===
+                                              "update_booking" ||
+                                            log.actionType ===
+                                              "complete_booking" ||
+                                            log.actionType ===
+                                              "finalize_booking") && (
+                                            <Briefcase
+                                              size={14}
+                                              className="text-indigo-600"
+                                            />
+                                          )}
+                                          {log.actionType ===
+                                            "cancel_booking" && (
+                                            <XCircle
+                                              size={14}
+                                              className="text-red-600"
+                                            />
+                                          )}
                                           {![
                                             "view_destination",
                                             "create_review",
@@ -1691,6 +1943,12 @@ function TravelerProfile() {
                                             "delete_review",
                                             "add_wishlist",
                                             "remove_wishlist",
+                                            "create_booking",
+                                            "confirm_booking",
+                                            "update_booking",
+                                            "complete_booking",
+                                            "finalize_booking",
+                                            "cancel_booking",
                                           ].includes(log.actionType) && (
                                             <Activity
                                               size={14}
@@ -1713,6 +1971,28 @@ function TravelerProfile() {
                                                 }
                                               >
                                                 {log.metadata.destinationName}
+                                              </span>
+                                            )}
+                                            {log.metadata?.destination && (
+                                              <span
+                                                className="text-sm text-purple-600 hover:text-purple-700 cursor-pointer font-medium"
+                                                onClick={() =>
+                                                  navigate(
+                                                    `/destinations/${
+                                                      log.metadata
+                                                        .destinationId ||
+                                                      log.entityId
+                                                    }`
+                                                  )
+                                                }
+                                              >
+                                                {log.metadata.destination}
+                                              </span>
+                                            )}
+                                            {log.metadata?.bookingReference && (
+                                              <span className="text-xs text-gray-500 font-mono">
+                                                ({log.metadata.bookingReference}
+                                                )
                                               </span>
                                             )}
                                           </div>

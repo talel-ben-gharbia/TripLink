@@ -2,9 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../Component/Navbar';
 import api from '../api';
-import { Heart, MapPin, Sparkles, Pin, Star, Share2, ChevronLeft, ChevronRight, X, FolderPlus, Folder, Check, Loader2 } from 'lucide-react';
+import { Heart, MapPin, Sparkles, Pin, Star, ChevronLeft, ChevronRight, X, FolderPlus, Folder, Check, Loader2, Calendar } from 'lucide-react';
+import { trackPageView } from '../utils/analytics';
 import AuthModal from '../Component/AuthModal';
 import ReviewSection from '../Component/ReviewSection';
+import BookingModal from '../Component/BookingModal';
+import TravelInfo from '../Component/TravelInfo';
+import SEO from '../Component/SEO';
+import SocialShare from '../Component/SocialShare';
+import { useErrorToast } from '../Component/ErrorToast';
 import * as adminCollectionService from '../services/adminCollectionService';
 
 const DestinationDetails = () => {
@@ -22,7 +28,10 @@ const DestinationDetails = () => {
   const [destinationCollections, setDestinationCollections] = useState([]);
   const [loadingCollections, setLoadingCollections] = useState(false);
   const [addingToCollection, setAddingToCollection] = useState(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const { showToast, ToastContainer } = useErrorToast();
 
   useEffect(() => {
     const handler = () => setIsOpen(true);
@@ -31,14 +40,16 @@ const DestinationDetails = () => {
   }, []);
 
   useEffect(() => {
-    // Check if user is admin
+    // Check if user is admin and get user data
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
-        const user = JSON.parse(userData);
-        setIsAdmin(user.isAdmin || false);
+        const parsedUser = JSON.parse(userData);
+        setIsAdmin(parsedUser.isAdmin || false);
+        setUser(parsedUser);
       } catch (e) {
         setIsAdmin(false);
+        setUser(null);
       }
     }
   }, []);
@@ -71,6 +82,13 @@ const DestinationDetails = () => {
       loadCollections();
     }
   }, [isAdmin]);
+
+  // SEO and analytics for destination page - MUST be before early returns
+  useEffect(() => {
+    if (item) {
+      trackPageView(`/destinations/${id}`);
+    }
+  }, [item, id]);
 
   const loadCollections = async () => {
     setLoadingCollections(true);
@@ -106,10 +124,10 @@ const DestinationDetails = () => {
     try {
       await adminCollectionService.addDestinationToCollection(collectionId, Number(id));
       setDestinationCollections(prev => [...prev, collectionId]);
-      alert('Destination added to collection successfully!');
+      showToast('Destination added to collection successfully!', 'success', 3000);
     } catch (error) {
       console.error('Error adding to collection:', error);
-      alert(error.response?.data?.error || 'Failed to add destination to collection');
+      showToast(error.response?.data?.error || 'Failed to add destination to collection', 'error', 5000);
     } finally {
       setAddingToCollection(null);
     }
@@ -122,10 +140,10 @@ const DestinationDetails = () => {
     try {
       await adminCollectionService.removeDestinationFromCollection(collectionId, Number(id));
       setDestinationCollections(prev => prev.filter(id => id !== collectionId));
-      alert('Destination removed from collection successfully!');
+      showToast('Destination removed from collection successfully!', 'success', 3000);
     } catch (error) {
       console.error('Error removing from collection:', error);
-      alert(error.response?.data?.error || 'Failed to remove destination from collection');
+      showToast(error.response?.data?.error || 'Failed to remove destination from collection', 'error', 5000);
     } finally {
       setAddingToCollection(null);
     }
@@ -185,23 +203,6 @@ const DestinationDetails = () => {
   const images = (item.images && Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []));
   const imageUrl = images[activeIndex] || 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200';
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: item.name,
-          text: `Check out ${item.name} on TripLink!`,
-          url: window.location.href,
-        });
-      } catch (err) {
-        // User cancelled or error occurred
-      }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
-    }
-  };
 
   const nextImage = () => {
     setActiveIndex((prev) => (prev + 1) % images.length);
@@ -214,9 +215,31 @@ const DestinationDetails = () => {
   };
 
   return (
-    <div className="min-h-screen page-bg">
+    <div className="min-h-screen page-bg" id="main-content">
+      <ToastContainer />
+      {item && (
+        <SEO 
+          title={`${item.name} - TripLink | ${item.city ? item.city + ', ' : ''}${item.country}`}
+          description={item.description || `Discover ${item.name} - ${item.city ? item.city + ', ' : ''}${item.country}. Book your perfect trip with TripLink's intelligent travel services.`}
+          image={item.image || item.images?.[0]}
+          type="article"
+          url={`${window.location.origin}/destinations/${id}`}
+          keywords={`${item.name}, ${item.city}, ${item.country}, travel, booking, ${item.category || ''}`}
+        />
+      )}
       <Navbar openAuth={() => setIsOpen(true)} />
       <AuthModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {item && (
+        <BookingModal
+          isOpen={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
+          destination={item}
+          onBookingComplete={(booking) => {
+            setShowBookingModal(false);
+            // Optionally navigate to bookings page or show success message
+          }}
+        />
+      )}
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <button
           onClick={() => navigate(-1)}
@@ -263,13 +286,6 @@ const DestinationDetails = () => {
                   <FolderPlus size={18} />
                 </button>
               )}
-              <button
-                onClick={handleShare}
-                className="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all"
-                aria-label="Share destination"
-              >
-                <Share2 size={18} />
-              </button>
             </div>
           </div>
           {images.length > 1 && (
@@ -322,6 +338,13 @@ const DestinationDetails = () => {
             {item.description && (
               <p className="mt-4 text-gray-700 leading-relaxed">{item.description}</p>
             )}
+            <div className="mt-4">
+              <SocialShare 
+                url={`${window.location.origin}/destinations/${id}`}
+                title={item.name}
+                description={item.description || `Discover ${item.name} on TripLink`}
+              />
+            </div>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 bg-gray-50 rounded-xl border">
                 <div className="text-xs text-gray-500">Category</div>
@@ -346,6 +369,20 @@ const DestinationDetails = () => {
               </div>
             </div>
             <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  const token = localStorage.getItem('token');
+                  if (!token) {
+                    setIsOpen(true);
+                  } else {
+                    setShowBookingModal(true);
+                  }
+                }}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 transition shadow-lg flex items-center justify-center gap-2 font-semibold"
+              >
+                <Calendar size={20} />
+                Book Now
+              </button>
               <button 
                 onClick={() => navigate('/destinations')} 
                 className="px-6 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors font-medium"
@@ -366,6 +403,13 @@ const DestinationDetails = () => {
         </div>
 
         {/* Reviews Section */}
+        {/* Travel Information */}
+        {item && item.country && (
+          <div className="mb-8">
+            <TravelInfo destination={item} country={item.country} />
+          </div>
+        )}
+
         <ReviewSection destinationId={id} />
 
         {/* Add to Collection Modal (Admin Only) */}

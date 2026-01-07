@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
+import { useErrorToast } from '../../Component/ErrorToast';
 import { 
     ArrowLeft,
     User,
@@ -20,6 +21,7 @@ import {
 const UserDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showToast, ToastContainer } = useErrorToast();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -66,7 +68,7 @@ const UserDetails = () => {
             await api.post(`/api/admin/users/${id}/suspend`);
             loadUserDetails();
         } catch (err) {
-            alert(err.message || 'Failed to suspend user');
+            showToast(err.response?.data?.error || err.message || 'Failed to suspend user', 'error', 5000);
         }
     };
 
@@ -75,7 +77,7 @@ const UserDetails = () => {
             await api.post(`/api/admin/users/${id}/activate`);
             loadUserDetails();
         } catch (err) {
-            alert(err.message || 'Failed to activate user');
+            showToast(err.response?.data?.error || err.message || 'Failed to activate user', 'error', 5000);
         }
     };
 
@@ -86,7 +88,7 @@ const UserDetails = () => {
             await api.delete(`/api/admin/users/${id}`);
             navigate('/admin');
         } catch (err) {
-            alert(err.message || 'Failed to delete user');
+            showToast(err.response?.data?.error || err.message || 'Failed to delete user', 'error', 5000);
         }
     };
 
@@ -140,8 +142,10 @@ const UserDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-            {/* Header */}
+        <>
+            <ToastContainer />
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                {/* Header */}
             <div className="bg-white shadow-lg border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
@@ -399,6 +403,7 @@ const UserDetails = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

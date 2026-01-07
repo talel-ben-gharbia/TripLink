@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import AgentApplicationForm from "./AgentApplicationForm";
 import { X } from "lucide-react";
 import { API_URL } from "../config";
 
@@ -25,6 +26,7 @@ function AuthModal({ isOpen, onClose }) {
     travelStyles: [],
     interests: [],
   });
+  const [showAgentForm, setShowAgentForm] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -66,10 +68,19 @@ function AuthModal({ isOpen, onClose }) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
+      // Check if password change is required
+      if (data.user.mustChangePassword) {
+        onClose();
+        window.location.href = "/change-password";
+        return;
+      }
+
       // Close modal and redirect based on user role
       onClose();
       if (data.user.isAdmin) {
         window.location.href = "/admin";
+      } else if (data.user.isAgent) {
+        window.location.href = "/agent-dashboard";
       } else {
         window.location.href = "/";
       }
@@ -139,9 +150,10 @@ function AuthModal({ isOpen, onClose }) {
       if (res.ok && (res.status === 201 || res.status === 200)) {
         // Try to parse JSON, but if it fails, still show success
         try {
-          await res.json(); // Response is OK, parse to clear buffer
+          const data = await res.json();
           // Store email for resend functionality
           localStorage.setItem("pendingEmail", formData.email);
+          
           // Success - show email verification screen
           setEmailVerificationSent(true);
           return;
@@ -241,6 +253,7 @@ function AuthModal({ isOpen, onClose }) {
     }, 5000);
     return () => clearInterval(interval);
   }, [heroImages.length]);
+
   if (!isOpen) return null;
 
   return (
@@ -309,6 +322,35 @@ function AuthModal({ isOpen, onClose }) {
                 handleInput={handleInput}
                 onForgotPassword={() => setShowForgotPassword(true)}
               />
+            ) : showAgentForm ? (
+              <div className="w-full p-6 overflow-y-auto max-h-[90vh]">
+                <button
+                  onClick={() => setShowAgentForm(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition z-10"
+                >
+                  <X size={24} />
+                </button>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-2 text-center text-gray-800">Apply as Travel Agent</h2>
+                  <p className="text-sm text-gray-600 text-center">
+                    Complete your agent application to help travelers plan their perfect trips
+                  </p>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    No account needed! Just provide your email and application details. If approved, you'll receive login credentials via email.
+                  </p>
+                </div>
+                <AgentApplicationForm
+                  onSuccess={() => {
+                    setShowAgentForm(false);
+                    // Close modal after successful submission
+                    onClose();
+                  }}
+                  onCancel={() => {
+                    setShowAgentForm(false);
+                    // Go back to previous view (login or register)
+                  }}
+                />
+              </div>
             ) : emailVerificationSent ? (
               <div className="flex flex-col items-center justify-center text-center p-6 space-y-4">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -407,6 +449,7 @@ function AuthModal({ isOpen, onClose }) {
                 handleInput={handleInput}
                 showPassword={showPassword}
                 setShowPassword={setShowPassword}
+                onOpenAgentForm={() => setShowAgentForm(true)}
               />
             )}
           </div>

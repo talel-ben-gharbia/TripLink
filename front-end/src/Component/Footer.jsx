@@ -1,9 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Sparkles, Linkedin, Twitter, Instagram, ShieldCheck, Lock, Award } from 'lucide-react';
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12 px-4" id="footer">
+    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-12 px-4 border-t border-gray-700" id="footer">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <div className="flex items-center space-x-2 mb-4">
@@ -18,17 +19,17 @@ function Footer() {
         <div>
           <h4 className="font-bold mb-4 text-lg">Company</h4>
           <ul className="space-y-2 text-gray-400">
-            <li><button type="button" className="hover:text-white transition-colors">About Us</button></li>
-            <li><button type="button" className="hover:text-white transition-colors">Careers</button></li>
-            <li><button type="button" className="hover:text-white transition-colors">Press</button></li>
+            <li><Link to="/about" className="hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">About Us</Link></li>
+            <li><Link to="/careers" className="hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">Careers</Link></li>
+            <li><Link to="/press" className="hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">Press</Link></li>
           </ul>
         </div>
         <div>
           <h4 className="font-bold mb-4 text-lg">Support</h4>
           <ul className="space-y-2 text-gray-400">
-            <li><button type="button" className="hover:text-white transition-colors">Help Center</button></li>
-            <li><button type="button" className="hover:text-white transition-colors">Contact Us</button></li>
-            <li><button type="button" className="hover:text-white transition-colors">Privacy Policy</button></li>
+            <li><Link to="/help" className="hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">Help Center</Link></li>
+            <li><Link to="/contact" className="hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">Contact Us</Link></li>
+            <li><Link to="/privacy" className="hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">Privacy Policy</Link></li>
           </ul>
         </div>
         <div>

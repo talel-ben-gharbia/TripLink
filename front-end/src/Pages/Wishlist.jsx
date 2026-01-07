@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Loader2, Trash2, MapPin, Star, Sparkles } from 'lucide-react';
 import Navbar from '../Component/Navbar';
 import Footer from '../Component/Footer';
+import SEO from '../Component/SEO';
 import api from '../api';
 import DestinationCard from '../Component/DestinationCard';
+import { useErrorToast } from '../Component/ErrorToast';
 
 /**
  * Phase 1: Wishlist Page
@@ -15,6 +17,7 @@ const Wishlist = () => {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(new Set());
+  const { showToast, ToastContainer } = useErrorToast();
 
   useEffect(() => {
     const loadWishlist = async () => {
@@ -47,8 +50,10 @@ const Wishlist = () => {
     try {
       await api.delete(`/api/wishlist/${id}`);
       setWishlist(prev => prev.filter(item => item.id !== id));
+      showToast('Removed from wishlist', 'success', 3000);
     } catch (error) {
       console.error('Failed to remove from wishlist:', error);
+      showToast('Failed to remove from wishlist', 'error', 5000);
     } finally {
       setRemoving(prev => {
         const next = new Set(prev);
@@ -80,6 +85,11 @@ const Wishlist = () => {
 
   return (
     <div className="min-h-screen page-bg flex flex-col">
+      <SEO 
+        title="My Wishlist - TripLink | Saved Destinations"
+        description="View and manage your saved travel destinations. Your personalized wishlist of dream destinations."
+      />
+      <ToastContainer />
       <Navbar />
       <div className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">

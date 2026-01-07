@@ -3,12 +3,14 @@ import { Star, MessageSquare, Trash2, Edit, User, Globe, Lock } from 'lucide-rea
 import { getReviews, getReviewStats, createReview, updateReview, deleteReview } from '../services/reviewService';
 import AuthModal from './AuthModal';
 import { API_URL } from '../config';
+import { useErrorToast } from './ErrorToast';
 
 /**
  * Review Section Component
  * Displays reviews and allows users to add/edit/delete their reviews
  */
 const ReviewSection = ({ destinationId }) => {
+  const { showToast, ToastContainer } = useErrorToast();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ const ReviewSection = ({ destinationId }) => {
     }
 
     if (rating < 1 || rating > 5) {
-      alert('Please select a rating between 1 and 5 stars');
+      showToast('Please select a rating between 1 and 5 stars', 'warning', 4000);
       return;
     }
 
@@ -127,8 +129,10 @@ const ReviewSection = ({ destinationId }) => {
   const userReview = reviews.find(r => currentUser && r.user?.id === currentUser.id);
 
   return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between mb-6">
+    <>
+      <ToastContainer />
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Reviews & Ratings</h2>
           {stats && (
@@ -344,8 +348,9 @@ const ReviewSection = ({ destinationId }) => {
         </div>
       )}
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-    </div>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </div>
+    </>
   );
 };
 
