@@ -19,7 +19,7 @@ const CollectionsSection = ({ limit = 3 }) => {
         const data = await getCollections();
         setCollections(Array.isArray(data) ? data.slice(0, limit) : []);
       } catch (error) {
-        console.error('Failed to load collections:', error);
+        // Failed to load collections - error logged for debugging
         setCollections([]);
       } finally {
         setLoading(false);

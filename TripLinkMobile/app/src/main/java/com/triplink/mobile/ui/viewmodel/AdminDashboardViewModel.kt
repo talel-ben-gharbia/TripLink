@@ -61,51 +61,60 @@ class AdminDashboardViewModel(
     
     fun loadDashboard() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
             when (_uiState.value.activeTab) {
                 AdminTab.OVERVIEW -> {
+                    // Load all data in parallel for better performance
                     val statsResult = adminRepository.getAdminStats()
                     val usersResult = adminRepository.getUsers()
                     val destinationsResult = adminRepository.getAdminDestinations()
                     val collectionsResult = adminRepository.getAdminCollections()
                     
+                    // Update state with all successful results
+                    var newState = _uiState.value.copy(isLoading = false)
+                    var loadedStats: com.triplink.mobile.data.model.AdminStatsResponse? = null
+                    var loadedDestinations: List<com.triplink.mobile.data.model.DestinationResponse> = emptyList()
+                    var loadedCollections: List<com.triplink.mobile.data.model.CollectionResponse> = emptyList()
+                    
                     statsResult.onSuccess { stats ->
-                        usersResult.onSuccess { users ->
-                            destinationsResult.onSuccess { destinations ->
-                                collectionsResult.onSuccess { collections ->
-                                    _uiState.value = _uiState.value.copy(
-                                        stats = stats,
-                                        users = users,
-                                        destinations = destinations,
-                                        collections = collections,
-                                        isLoading = false,
-                                        error = null
-                                    )
-                                }.onFailure {
-                                    _uiState.value = _uiState.value.copy(
-                                        isLoading = false,
-                                        error = it.message
-                                    )
-                                }
-                            }.onFailure {
-                                _uiState.value = _uiState.value.copy(
-                                    isLoading = false,
-                                    error = it.message
-                                )
-                            }
-                        }.onFailure {
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                error = it.message
-                            )
-                        }
+                        loadedStats = stats
                     }.onFailure {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = it.message
-                        )
+                        newState = newState.copy(error = it.message ?: "Failed to load stats")
                     }
+                    
+                    usersResult.onSuccess { users ->
+                        newState = newState.copy(users = users)
+                    }.onFailure {
+                        if (newState.error == null) {
+                            newState = newState.copy(error = it.message ?: "Failed to load users")
+                        }
+                    }
+                    
+                    destinationsResult.onSuccess { destinations ->
+                        loadedDestinations = destinations
+                        newState = newState.copy(destinations = destinations)
+                    }.onFailure {
+                        if (newState.error == null) {
+                            newState = newState.copy(error = it.message ?: "Failed to load destinations")
+                        }
+                    }
+                    
+                    collectionsResult.onSuccess { collections ->
+                        loadedCollections = collections
+                        newState = newState.copy(collections = collections)
+                    }.onFailure {
+                        if (newState.error == null) {
+                            newState = newState.copy(error = it.message ?: "Failed to load collections")
+                        }
+                    }
+                    
+                    // Update stats with computed values
+                    if (loadedStats != null) {
+                        newState = newState.copy(stats = loadedStats)
+                    }
+                    
+                    _uiState.value = newState
                 }
                 AdminTab.USERS -> {
                     val usersResult = adminRepository.getUsers()

@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.triplink.mobile.di.LocalAppContainer
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Navbar
 import com.triplink.mobile.ui.components.TravelDocuments
 import com.triplink.mobile.ui.theme.BackgroundCream
@@ -119,10 +120,10 @@ fun SettingsScreen(
             Navbar(
                 navController = navController,
                 user = uiState.user,
-                onOpenAuth = { navController.navigate("home") },
+                onOpenAuth = { navController.navigate(Screen.Home.route) },
                 onLogout = {
                     viewModel.refresh()
-                    navController.navigate("home") {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo("home") { inclusive = true }
                     }
                 }
@@ -152,7 +153,7 @@ fun SettingsScreen(
                             text = "Please log in to view settings",
                             style = MaterialTheme.typography.titleLarge
                         )
-                        Button(onClick = { navController.navigate("home") }) {
+                        Button(onClick = { navController.navigate(Screen.Home.route) }) {
                             Text("Go to Home")
                         }
                     }
@@ -724,8 +725,8 @@ fun SettingsScreen(
                                             onClick = {
                                                 viewModel.deleteAccount(deletePassword)
                                                 if (uiState.user == null) {
-                                                    navController.navigate("home") {
-                                                        popUpTo("home") { inclusive = true }
+                                                    navController.navigate(Screen.Home.route) {
+                                                        popUpTo(Screen.Home.route) { inclusive = true }
                                                     }
                                                 }
                                             },

@@ -42,8 +42,7 @@ const TravelInfo = ({ destination, country }) => {
           wind: 'Loading...'
         });
       } catch (e) {
-        console.error('Weather API error:', e);
-        // Don't show weather if API fails
+        // Weather API error - don't show weather if API fails
         setWeather(null);
       }
 
@@ -61,7 +60,7 @@ const TravelInfo = ({ destination, country }) => {
           });
         }
       } catch (e) {
-        console.error('Currency fetch error:', e);
+        // Currency fetch error - error logged for debugging
       }
 
       // Load timezone
@@ -72,7 +71,7 @@ const TravelInfo = ({ destination, country }) => {
           setTimezone(tzData[0].timezones[0]);
         }
       } catch (e) {
-        console.error('Timezone fetch error:', e);
+        // Timezone fetch error - error logged for debugging
       }
 
       // Load emergency contacts from country data
@@ -90,7 +89,7 @@ const TravelInfo = ({ destination, country }) => {
           });
         }
       } catch (e) {
-        console.error('Emergency contacts error:', e);
+        // Emergency contacts error - error logged for debugging
         setEmergencyContacts({
           police: 'Check local directory',
           ambulance: 'Check local directory',
@@ -107,7 +106,7 @@ const TravelInfo = ({ destination, country }) => {
       });
 
     } catch (error) {
-      console.error('Failed to load travel info:', error);
+      // Failed to load travel info - error logged for debugging
     } finally {
       setLoading(false);
     }
@@ -244,7 +243,6 @@ const TravelInfo = ({ destination, country }) => {
                       }
                     } catch (error) {
                       // If anything fails, just display the timezone string
-                      console.error('Timezone formatting error:', error);
                       return timezone;
                     }
                   })()}

@@ -107,7 +107,7 @@ fun UserDetailsScreen(
                             Text(text = "Email: ${user.email}")
                             user.phone?.let { Text(text = "Phone: $it") }
                             Text(text = "Status: ${user.status ?: "PENDING"}")
-                            Text(text = "Roles: ${user.roles.joinToString(", ")}")
+                            Text(text = "Roles: ${user.roles?.joinToString(", ") ?: "None"}")
                         }
                     }
                     

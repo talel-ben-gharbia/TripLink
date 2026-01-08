@@ -67,24 +67,20 @@ function Settings() {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.log("No token found");
+        // No token found, redirecting
         navigate("/");
         return;
       }
 
       try {
-        console.log("Fetching user with token:", token);
         const res = await fetch(`${API_URL}/api/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        console.log("Response status:", res.status);
         
         if (res.ok) {
           const data = await res.json();
-          console.log("User data received:", data);
           setUser(data.user);
           setUpdateData({
             firstName: data.user.firstName || "",
@@ -99,9 +95,9 @@ function Settings() {
           // Try to get error message from response
           try {
             const errorData = await res.json();
-            console.error("Error response:", errorData);
+            // Error response logged for debugging
           } catch (e) {
-            console.error("Could not parse error response");
+            // Could not parse error response
           }
           // User not authenticated, redirect to home
           navigate("/");
@@ -220,7 +216,7 @@ function Settings() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setTimeout(() => {
-          window.location.href = "/";
+          navigate("/");
         }, 2000);
       } else {
         setDeleteError(data.error || "Failed to delete account");
@@ -324,7 +320,7 @@ function Settings() {
                 </p>
                 <button
                   onClick={() => setShowUpdateForm(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold"
                 >
                   Update Profile
                 </button>
@@ -489,7 +485,7 @@ function Settings() {
 
                 <button
                   onClick={() => setShowPasswordSection((s) => !s)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold flex items-center space-x-2"
                 >
                   <span>{showPasswordSection ? "Hide" : "Show"} Change Password</span>
                   {showPasswordSection ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

@@ -9,7 +9,7 @@ data class ApiResponse(
 )
 
 data class HealthResponse(
-    val status: String,
+    val status: String? = null,
     val message: String,
     val timestamp: String,
     val php_version: String
@@ -19,9 +19,11 @@ data class HealthResponse(
 data class RegisterRequest(
     val email: String,
     val password: String,
-    @SerializedName("first_name") val firstName: String,
-    @SerializedName("last_name") val lastName: String,
-    val phone: String? = null
+    @SerializedName("firstName") val firstName: String,
+    @SerializedName("lastName") val lastName: String,
+    val phone: String,
+    @SerializedName("travelStyles") val travelStyles: List<String>? = null,
+    @SerializedName("interests") val interests: List<String>? = null
 )
 
 data class LoginRequest(
@@ -30,9 +32,10 @@ data class LoginRequest(
 )
 
 data class AuthResponse(
-    val token: String,
-    val user: UserData,
-    val refresh_token: String? = null
+    val token: String? = null,
+    val user: UserData? = null,
+    val refresh_token: String? = null,
+    val message: String? = null
 )
 
 data class UserResponse(
@@ -46,7 +49,7 @@ data class UserData(
     @SerializedName("first_name") val firstName: String? = null,
     @SerializedName("last_name") val lastName: String? = null,
     val phone: String? = null,
-    val roles: List<String> = emptyList(),
+    val roles: List<String>? = null,
     @SerializedName("is_verified") val isVerified: Boolean = false,
     val status: String? = null,
     @SerializedName("profile_image") val profileImage: String? = null,
@@ -56,7 +59,9 @@ data class UserData(
     @SerializedName("last_login") val lastLogin: String? = null,
     @SerializedName("personality_axis") val personalityAxis: Map<String, Int>? = null,
     @SerializedName("preference_categories") val preferenceCategories: Map<String, Int>? = null,
-    @SerializedName("is_agent") val isAgent: Boolean = false
+    @SerializedName("is_agent") val isAgent: Boolean = false,
+    @SerializedName("is_admin") val isAdmin: Boolean = false,
+    @SerializedName("must_change_password") val mustChangePassword: Boolean = false
 )
 
 // ========== Profile Models ==========
@@ -111,9 +116,9 @@ data class ProfileStats(
 // ========== Destination Models ==========
 data class DestinationResponse(
     val id: Int,
-    val name: String,
-    val description: String,
-    val country: String,
+    val name: String? = null,
+    val description: String? = null,
+    val country: String? = null,
     val city: String? = null,
     val images: List<String>? = null,
     val price: Double? = null, // Legacy field, use priceMin/priceMax
@@ -155,9 +160,9 @@ data class AvailabilityInfo(
 
 data class AutocompleteSuggestion(
     val id: Int,
-    val name: String,
-    val country: String,
-    val type: String
+    val name: String? = null,
+    val country: String? = null,
+    val type: String? = null
 )
 
 // ========== Collection Models ==========
@@ -173,24 +178,35 @@ data class CollectionResponse(
 )
 
 data class CollectionDetailResponse(
-    val collection: CollectionResponse,
+    // Collection fields at root level (matching backend response)
+    val id: Int,
+    val name: String,
+    val slug: String,
+    val description: String? = null,
+    @SerializedName("coverImage") val coverImage: String? = null,
+    val type: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
     val destinations: List<DestinationResponse> = emptyList()
 )
 
 // ========== Booking Models ==========
+data class BookingsListResponse(
+    val bookings: List<BookingResponse>
+)
+
 data class BookingResponse(
     val id: Int,
     @SerializedName("destination_id") val destinationId: Int,
     @SerializedName("user_id") val userId: Int,
-    @SerializedName("travel_date") val travelDate: String,
+    @SerializedName("travel_date") val travelDate: String? = null,
     @SerializedName("return_date") val returnDate: String? = null,
     @SerializedName("check_in_date") val checkInDate: String? = null,
     @SerializedName("check_out_date") val checkOutDate: String? = null,
     @SerializedName("number_of_travelers") val numberOfTravelers: Int,
     @SerializedName("number_of_guests") val numberOfGuests: Int? = null,
-    @SerializedName("total_price") val totalPrice: Double,
+    @SerializedName("total_price") val totalPrice: Double? = null,
     val currency: String = "USD",
-    val status: String,
+    val status: String? = null,
     @SerializedName("payment_status") val paymentStatus: String? = null,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String? = null,
@@ -331,7 +347,7 @@ data class CommissionResponse(
     @SerializedName("booking_id") val bookingId: Int,
     val amount: Double,
     val currency: String = "USD",
-    val status: String,
+    val status: String? = null,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("paid_at") val paidAt: String? = null
 )
@@ -385,6 +401,18 @@ data class CreateReviewRequest(
     val rating: Int,
     val comment: String? = null,
     @SerializedName("is_public") val isPublic: Boolean = true
+)
+
+data class UpdateReviewRequest(
+    val rating: Int? = null,
+    val comment: String? = null,
+    @SerializedName("is_public") val isPublic: Boolean? = null
+)
+
+data class ReviewStatsResponse(
+    @SerializedName("average_rating") val averageRating: Double,
+    @SerializedName("total_reviews") val totalReviews: Int,
+    @SerializedName("rating_distribution") val ratingDistribution: Map<Int, Int> = emptyMap() // rating -> count
 )
 
 // ========== Onboarding Models ==========
@@ -519,15 +547,56 @@ data class ActivityItem(
 )
 
 // ========== Admin Models ==========
-data class AdminStatsResponse(
-    @SerializedName("total_users") val totalUsers: Int = 0,
-    @SerializedName("total_destinations") val totalDestinations: Int = 0,
-    @SerializedName("total_bookings") val totalBookings: Int = 0,
-    @SerializedName("total_collections") val totalCollections: Int = 0,
-    @SerializedName("total_agents") val totalAgents: Int = 0,
-    @SerializedName("pending_applications") val pendingApplications: Int = 0,
-    @SerializedName("total_revenue") val totalRevenue: Double = 0.0
+data class AdminStatsUsers(
+    @SerializedName("totalUsers") val totalUsers: Int = 0,
+    @SerializedName("activeUsers") val activeUsers: Int = 0,
+    @SerializedName("suspendedUsers") val suspendedUsers: Int = 0,
+    @SerializedName("pendingUsers") val pendingUsers: Int = 0,
+    @SerializedName("verifiedUsers") val verifiedUsers: Int = 0,
+    @SerializedName("unverifiedUsers") val unverifiedUsers: Int = 0
 )
+
+data class AdminStatsAgents(
+    @SerializedName("totalAgents") val totalAgents: Int = 0,
+    @SerializedName("activeAgents") val activeAgents: Int = 0
+)
+
+data class AdminStatsBookings(
+    @SerializedName("totalBookings") val totalBookings: Int = 0,
+    @SerializedName("pendingBookings") val pendingBookings: Int = 0,
+    @SerializedName("confirmedBookings") val confirmedBookings: Int = 0,
+    @SerializedName("cancelledBookings") val cancelledBookings: Int = 0,
+    @SerializedName("completedBookings") val completedBookings: Int = 0
+)
+
+data class AdminStatsPayments(
+    @SerializedName("totalRevenue") val totalRevenue: Double = 0.0,
+    @SerializedName("paidCount") val paidCount: Int = 0,
+    @SerializedName("pendingPayments") val pendingPayments: Int = 0,
+    @SerializedName("refundedCount") val refundedCount: Int = 0
+)
+
+data class AdminStatsApplications(
+    @SerializedName("pendingApplications") val pendingApplications: Int = 0
+)
+
+data class AdminStatsResponse(
+    @SerializedName("users") val users: AdminStatsUsers? = null,
+    @SerializedName("agents") val agents: AdminStatsAgents? = null,
+    @SerializedName("bookings") val bookings: AdminStatsBookings? = null,
+    @SerializedName("payments") val payments: AdminStatsPayments? = null,
+    @SerializedName("applications") val applications: AdminStatsApplications? = null,
+    @SerializedName("recentActivity") val recentActivity: Int = 0
+) {
+    // Computed properties for easy access
+    val totalUsers: Int get() = users?.totalUsers ?: 0
+    val totalDestinations: Int get() = 0 // Not in backend stats, will be computed from destinations list
+    val totalBookings: Int get() = bookings?.totalBookings ?: 0
+    val totalCollections: Int get() = 0 // Not in backend stats, will be computed from collections list
+    val totalAgents: Int get() = agents?.totalAgents ?: 0
+    val pendingApplications: Int get() = applications?.pendingApplications ?: 0
+    val totalRevenue: Double get() = payments?.totalRevenue ?: 0.0
+}
 
 data class AdminBookingsResponse(
     val bookings: List<BookingResponse> = emptyList()
@@ -561,7 +630,7 @@ data class AgentApplicationResponse(
     @SerializedName("license_number") val licenseNumber: String? = null,
     val experience: String? = null,
     val motivation: String? = null,
-    val status: String,
+    val status: String? = null,
     @SerializedName("admin_notes") val adminNotes: String? = null,
     @SerializedName("rejection_reason") val rejectionReason: String? = null,
     @SerializedName("created_at") val createdAt: String,
@@ -596,5 +665,59 @@ data class UpdateCollectionRequest(
     @SerializedName("display_order") val displayOrder: Int? = null,
     @SerializedName("is_active") val isActive: Boolean? = null,
     val slug: String? = null
+)
+
+data class UpdateDestinationOrderRequest(
+    @SerializedName("destinationOrders") val destinationOrders: Map<Int, Int> // destinationId -> order
+)
+
+// ========== Onboarding Models ==========
+data class OnboardingStatusResponse(
+    @SerializedName("needs_onboarding") val needsOnboarding: Boolean = false,
+    @SerializedName("completed_steps") val completedSteps: List<String> = emptyList()
+)
+
+// ========== Itinerary Models ==========
+data class ItineraryResponse(
+    val items: List<ItineraryItemResponse> = emptyList()
+)
+
+data class ItineraryItemResponse(
+    val id: Int,
+    @SerializedName("destination_id") val destinationId: Int? = null,
+    @SerializedName("booking_id") val bookingId: Int? = null,
+    val title: String,
+    val description: String? = null,
+    @SerializedName("start_date") val startDate: String? = null,
+    @SerializedName("end_date") val endDate: String? = null,
+    val time: String? = null,
+    val location: String? = null,
+    val notes: String? = null,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("updated_at") val updatedAt: String? = null,
+    val destination: DestinationResponse? = null,
+    val booking: BookingResponse? = null
+)
+
+data class CreateItineraryItemRequest(
+    @SerializedName("destination_id") val destinationId: Int? = null,
+    @SerializedName("booking_id") val bookingId: Int? = null,
+    val title: String,
+    val description: String? = null,
+    @SerializedName("start_date") val startDate: String? = null,
+    @SerializedName("end_date") val endDate: String? = null,
+    val time: String? = null,
+    val location: String? = null,
+    val notes: String? = null
+)
+
+data class UpdateItineraryItemRequest(
+    val title: String? = null,
+    val description: String? = null,
+    @SerializedName("start_date") val startDate: String? = null,
+    @SerializedName("end_date") val endDate: String? = null,
+    val time: String? = null,
+    val location: String? = null,
+    val notes: String? = null
 )
 

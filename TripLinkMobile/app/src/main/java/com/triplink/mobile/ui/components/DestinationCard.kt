@@ -66,7 +66,7 @@ fun DestinationCard(
                 
                 AsyncImage(
                     model = imageUrl,
-                    contentDescription = destination.name,
+                    contentDescription = destination.name ?: "Destination",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -241,7 +241,7 @@ fun DestinationCard(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = TextUtils.safeText(destination.name).takeIf { it.isNotEmpty() } ?: "Unknown Destination",
+                    text = (destination.name ?: "").takeIf { it.isNotEmpty() } ?: "Unknown Destination",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 4.dp)
@@ -266,12 +266,16 @@ fun DestinationCard(
                 }
 
                 // Category
-                destination.category?.let { category ->
+                destination.category?.takeIf { it.isNotEmpty() }?.let { category ->
                     FilterChip(
                         onClick = {},
                         label = { 
                             Text(
-                                text = category.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                                text = if (category.isNotEmpty()) {
+                                    category.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                } else {
+                                    "Category"
+                                },
                                 style = MaterialTheme.typography.labelSmall
                             )
                         },
@@ -316,12 +320,12 @@ fun DestinationCard(
                         modifier = Modifier.padding(bottom = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        destination.tags!!.take(3).forEach { tag ->
+                        destination.tags!!.take(3).filterNotNull().forEach { tag ->
                             AssistChip(
                                 onClick = {},
                                 label = { 
                                     Text(
-                                        text = tag,
+                                        text = tag.takeIf { it.isNotEmpty() } ?: "Tag",
                                         style = MaterialTheme.typography.labelSmall
                                     )
                                 }

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import AgentApplicationForm from "./AgentApplicationForm";
 import { X } from "lucide-react";
 import { API_URL } from "../config";
+import { useErrorToast } from "./ErrorToast";
 
 function AuthModal({ isOpen, onClose }) {
+  const navigate = useNavigate();
+  const { showToast, ToastContainer } = useErrorToast();
   const [mode, setMode] = useState("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
@@ -32,7 +36,7 @@ function AuthModal({ isOpen, onClose }) {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/login", {
+      const res = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,14 +57,14 @@ function AuthModal({ isOpen, onClose }) {
         } catch (e) {
           // If response is not JSON, use default message
         }
-        alert(errorMessage);
+        showToast(errorMessage, 'error', 5000);
         return;
       }
 
       const data = await res.json();
 
       if (!data.token) {
-        alert("Invalid response from server. Please try again.");
+        showToast("Invalid response from server. Please try again.", 'error', 5000);
         return;
       }
 
@@ -71,25 +75,26 @@ function AuthModal({ isOpen, onClose }) {
       // Check if password change is required
       if (data.user.mustChangePassword) {
         onClose();
-        window.location.href = "/change-password";
+        navigate("/change-password");
         return;
       }
 
       // Close modal and redirect based on user role
       onClose();
+      showToast("Login successful! Welcome back.", 'success', 3000);
       if (data.user.isAdmin) {
-        window.location.href = "/admin";
+        navigate("/admin");
       } else if (data.user.isAgent) {
-        window.location.href = "/agent-dashboard";
+        navigate("/agent/dashboard");
       } else {
-        window.location.href = "/";
+        navigate("/");
       }
     } catch (err) {
       console.error("Login error:", err);
       const errorMsg =
         err.message ||
         `Cannot connect to server. Please make sure the backend is running on ${API_URL}`;
-      alert(errorMsg);
+      showToast(errorMsg, 'error', 5000);
     }
   };
 
@@ -99,11 +104,11 @@ function AuthModal({ isOpen, onClose }) {
     // Validate password match and complexity on step 1
     if (step === 1) {
       if (formData.password !== formData.confirmPassword) {
-        alert("Passwords do not match!");
+        showToast("Passwords do not match!", 'error', 4000);
         return;
       }
       if (formData.password.length < 8) {
-        alert("Password must be at least 8 characters!");
+        showToast("Password must be at least 8 characters!", 'error', 4000);
         return;
       }
       // Check password complexity
@@ -111,8 +116,10 @@ function AuthModal({ isOpen, onClose }) {
       const hasUpper = /(?=.*[A-Z])/.test(formData.password);
       const hasNumber = /(?=.*\d)/.test(formData.password);
       if (!hasLower || !hasUpper || !hasNumber) {
-        alert(
-          "Password must contain at least one uppercase letter, one lowercase letter, and one number!"
+        showToast(
+          "Password must contain at least one uppercase letter, one lowercase letter, and one number!",
+          'error',
+          5000
         );
         return;
       }
@@ -140,7 +147,7 @@ function AuthModal({ isOpen, onClose }) {
     }
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/register", {
+      const res = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         body: formDataToSend,
         // Don't set Content-Type for FormData - browser sets it automatically with boundary
@@ -170,19 +177,19 @@ function AuthModal({ isOpen, onClose }) {
         const data = await res.json();
         if (data.errors && Array.isArray(data.errors)) {
           const errorMessage = data.errors.join(", ");
-          alert(errorMessage);
+          showToast(errorMessage, 'error', 5000);
         } else {
-          alert(data.message || data.error || "Registration failed");
+          showToast(data.message || data.error || "Registration failed", 'error', 5000);
         }
       } catch (e) {
-        alert("Registration failed. Please try again.");
+        showToast("Registration failed. Please try again.", 'error', 5000);
       }
     } catch (err) {
       console.error("Registration error:", err);
       const errorMsg =
         err.message ||
         `Cannot connect to server. Please make sure the backend is running on ${API_URL}`;
-      alert(errorMsg);
+      showToast(errorMsg, 'error', 5000);
     }
   };
   const handleImageUpload = (e) => {
@@ -258,6 +265,7 @@ function AuthModal({ isOpen, onClose }) {
 
   return (
     <>
+      <ToastContainer />
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm animate-slide-up">
         <div className="bg-white rounded-lg shadow-lg flex w-full max-w-4xl relative overflow-hidden">
           <div className="hidden md:block w-1/2 relative overflow-hidden">
@@ -387,7 +395,7 @@ function AuthModal({ isOpen, onClose }) {
                     onClick={async () => {
                       try {
                         const res = await fetch(
-                          "http://127.0.0.1:8000/api/resend-verification",
+                          `${API_URL}/api/resend-verification`,
                           {
                             method: "POST",
                             headers: {
@@ -398,15 +406,17 @@ function AuthModal({ isOpen, onClose }) {
                         );
                         const data = await res.json();
                         if (res.ok) {
-                          alert(
+                          showToast(
                             data.message ||
-                            "Verification email sent successfully!"
+                            "Verification email sent successfully!",
+                            'success',
+                            5000
                           );
                         } else {
-                          alert(data.error || "Failed to resend email");
+                          showToast(data.error || "Failed to resend email", 'error', 5000);
                         }
                       } catch (err) {
-                        alert("Network error. Please try again later.");
+                        showToast("Network error. Please try again later.", 'error', 5000);
                       }
                     }}
                   >

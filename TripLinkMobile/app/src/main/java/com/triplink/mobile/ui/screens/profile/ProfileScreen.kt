@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.triplink.mobile.di.LocalAppContainer
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Navbar
 import com.triplink.mobile.ui.theme.BackgroundCream
 import com.triplink.mobile.ui.utils.TextUtils
@@ -63,7 +64,7 @@ fun ProfileScreen(
                 onOpenAuth = { showAuthModal = true },
                 onLogout = {
                     viewModel.logout()
-                    navController.navigate("home") {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo("home") { inclusive = true }
                     }
                 }
@@ -319,8 +320,8 @@ fun OverviewTab(
                         ProfileInfoRow("Name", "${user.firstName ?: ""} ${user.lastName ?: ""}".trim())
                         ProfileInfoRow("Email", user.email)
                         user.phone?.let { ProfileInfoRow("Phone", it) }
-                        if (user.roles.isNotEmpty()) {
-                            ProfileInfoRow("Role", user.roles.joinToString(", "))
+                        if (!user.roles.isNullOrEmpty()) {
+                            ProfileInfoRow("Role", user.roles!!.joinToString(", "))
                         }
                         ProfileInfoRow("Profile Completion", "${viewModel.getProfileCompletion()}%")
                     }
@@ -439,9 +440,7 @@ fun BookingsTab(
         }
     } else {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .weight(1f),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -496,7 +495,7 @@ fun BookingCardItem(
                     }
                 ) {
                     Text(
-                        text = booking.status,
+                        text = booking.status ?: "UNKNOWN",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = when (booking.status) {
@@ -514,12 +513,12 @@ fun BookingCardItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Total: $${String.format("%.0f", booking.totalPrice)}",
+                    text = "Total: ${booking.totalPrice?.let { "$${String.format("%.0f", it)}" } ?: "Not available"}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = booking.checkInDate ?: booking.travelDate,
+                    text = booking.checkInDate ?: booking.travelDate ?: "Date not set",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -865,12 +864,12 @@ fun WishlistItemCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = destination.name,
+                    text = destination.name ?: "Destination",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${destination.city ?: ""}, ${destination.country}",
+                    text = "${destination.city ?: ""}, ${destination.country ?: ""}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )

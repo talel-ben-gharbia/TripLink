@@ -26,7 +26,7 @@ fun TravelInfo(
     var currency by remember { mutableStateOf<CurrencyInfo?>(null) }
     var timezone by remember { mutableStateOf<String?>(null) }
     
-    LaunchedEffect(destination.country) {
+    LaunchedEffect(destination.country ?: "") {
         loading = true
         // Load currency and timezone info
         // In a real app, you'd fetch this from an API

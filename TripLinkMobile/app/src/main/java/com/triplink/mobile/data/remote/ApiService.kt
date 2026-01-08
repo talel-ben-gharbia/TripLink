@@ -12,8 +12,18 @@ import retrofit2.http.*
 interface ApiService {
     
     // ========== Authentication ==========
+    @Multipart
     @POST("/api/register")
-    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+    suspend fun register(
+        @Part("email") email: okhttp3.RequestBody,
+        @Part("password") password: okhttp3.RequestBody,
+        @Part("firstName") firstName: okhttp3.RequestBody,
+        @Part("lastName") lastName: okhttp3.RequestBody,
+        @Part("phone") phone: okhttp3.RequestBody,
+        @Part("travelStyles") travelStyles: okhttp3.RequestBody?,
+        @Part("interests") interests: okhttp3.RequestBody?,
+        @Part profileImage: okhttp3.MultipartBody.Part?
+    ): Response<AuthResponse>
     
     @POST("/api/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
@@ -115,7 +125,7 @@ interface ApiService {
     
     // ========== Bookings ==========
     @GET("/api/bookings")
-    suspend fun getMyBookings(): Response<List<BookingResponse>>
+    suspend fun getMyBookings(): Response<BookingsListResponse>
     
     @GET("/api/bookings/{id}")
     suspend fun getBooking(@Path("id") id: Int): Response<BookingResponse>
@@ -244,7 +254,7 @@ interface ApiService {
     @GET("/api/admin/agents")
     suspend fun getAdminAgents(): Response<AdminAgentsResponse>
     
-    @POST("/api/admin/agents/{id}/remove")
+    @POST("/api/admin/agents/{id}/remove-role")
     suspend fun removeAgentRole(@Path("id") id: Int): Response<ApiResponse>
     
     // ========== Admin Agent Applications ==========
@@ -286,6 +296,12 @@ interface ApiService {
         @Path("destinationId") destinationId: Int
     ): Response<ApiResponse>
     
+    @PUT("/api/admin/collections/{collectionId}/destinations/order")
+    suspend fun updateDestinationOrder(
+        @Path("collectionId") collectionId: Int,
+        @Body request: UpdateDestinationOrderRequest
+    ): Response<ApiResponse>
+    
     // ========== Admin User Actions ==========
     @POST("/api/admin/users/{id}/suspend")
     suspend fun suspendUser(@Path("id") id: Int): Response<ApiResponse>
@@ -300,8 +316,24 @@ interface ApiService {
     @GET("/api/destinations/{id}/reviews")
     suspend fun getDestinationReviews(@Path("id") id: Int): Response<List<ReviewResponse>>
     
+    @GET("/api/destinations/{id}/reviews/stats")
+    suspend fun getReviewStats(@Path("id") id: Int): Response<ReviewStatsResponse>
+    
     @POST("/api/destinations/{id}/reviews")
     suspend fun createReview(@Path("id") id: Int, @Body request: CreateReviewRequest): Response<ReviewResponse>
+    
+    @PUT("/api/destinations/{id}/reviews/{reviewId}")
+    suspend fun updateReview(
+        @Path("id") id: Int,
+        @Path("reviewId") reviewId: Int,
+        @Body request: UpdateReviewRequest
+    ): Response<ReviewResponse>
+    
+    @DELETE("/api/destinations/{id}/reviews/{reviewId}")
+    suspend fun deleteReview(
+        @Path("id") id: Int,
+        @Path("reviewId") reviewId: Int
+    ): Response<ApiResponse>
     
     @GET("/api/reviews/public")
     suspend fun getPublicReviews(): Response<List<ReviewResponse>>
@@ -313,6 +345,34 @@ interface ApiService {
     // ========== Onboarding ==========
     @POST("/api/onboarding")
     suspend fun submitOnboarding(@Body request: OnboardingRequest): Response<ApiResponse>
+    
+    @GET("/api/onboarding/status")
+    suspend fun getOnboardingStatus(): Response<OnboardingStatusResponse>
+    
+    @POST("/api/onboarding/complete")
+    suspend fun completeOnboarding(@Body request: OnboardingRequest): Response<ApiResponse>
+    
+    @POST("/api/onboarding/skip")
+    suspend fun skipOnboarding(): Response<ApiResponse>
+    
+    // ========== Itinerary ==========
+    @GET("/api/itinerary")
+    suspend fun getItinerary(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): Response<ItineraryResponse>
+    
+    @POST("/api/itinerary")
+    suspend fun createItineraryItem(@Body request: CreateItineraryItemRequest): Response<ItineraryItemResponse>
+    
+    @PUT("/api/itinerary/{id}")
+    suspend fun updateItineraryItem(
+        @Path("id") id: Int,
+        @Body request: UpdateItineraryItemRequest
+    ): Response<ItineraryItemResponse>
+    
+    @DELETE("/api/itinerary/{id}")
+    suspend fun deleteItineraryItem(@Path("id") id: Int): Response<ApiResponse>
     
     // ========== Travel Documents ==========
     @GET("/api/documents")

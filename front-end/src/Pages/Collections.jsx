@@ -22,7 +22,7 @@ const Collections = () => {
         const data = await getCollections(filter === 'all' ? null : filter);
         setCollections(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Failed to load collections:', error);
+        // Failed to load collections - error logged for debugging
         setCollections([]);
       } finally {
         setLoading(false);

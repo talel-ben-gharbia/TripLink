@@ -12,7 +12,7 @@ import TravelerProfile from "./Pages/TravelerProfile";
 import Settings from "./Pages/Settings";
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
 import UserDetails from "./Pages/Admin/UserDetails";
-import './index.css'
+import "./index.css";
 import Destinations from "./Pages/Destinations";
 import DestinationDetails from "./Pages/DestinationDetails";
 import AdminDestinations from "./Pages/Admin/AdminDestinations";
@@ -31,6 +31,7 @@ import CompareDestinations from "./Pages/CompareDestinations";
 import ClientPortfolio from "./Pages/Agent/ClientPortfolio";
 import PackageBuilder from "./Pages/Agent/PackageBuilder";
 import CommissionDashboard from "./Pages/Agent/CommissionDashboard";
+import ChatBot from "./ChatBot/ChatBot";
 
 function App() {
   useEffect(() => {
@@ -48,30 +49,32 @@ function App() {
       </a>
       <Routes>
         <Route path="/" element={<Home />} />
-      <Route path="/email-verification" element={<EmailVerification />} />
-      <Route path="/reset-password" element={<ResetPasswordForm />} />
-      <Route path="/change-password" element={<ChangePassword />} />
-      <Route path="/profile" element={<TravelerProfile />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/destinations" element={<Destinations />} />
-      <Route path="/destinations/:id" element={<DestinationDetails />} />
-      <Route path="/collections" element={<Collections />} />
-      <Route path="/collections/:slug" element={<CollectionDetail />} />
-      <Route path="/users/:id/profile" element={<PublicProfile />} />
-      <Route path="/wishlist" element={<Wishlist />} />
-      <Route path="/bookings" element={<MyBookings />} />
-      <Route path="/booking-success" element={<BookingSuccess />} />
-      <Route path="/booking-cancel" element={<BookingCancel />} />
-      <Route path="/agent/dashboard" element={<AgentDashboard />} />
-      <Route path="/agent/apply" element={<ApplyAsAgent />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/users/:id" element={<UserDetails />} />
-      <Route path="/admin/destinations" element={<AdminDestinations />} />
-      <Route path="/help" element={<HelpCenter />} />
-      <Route path="/compare" element={<CompareDestinations />} />
-      <Route path="/agent/clients" element={<ClientPortfolio />} />
-      <Route path="/agent/packages" element={<PackageBuilder />} />
+        <Route path="/email-verification" element={<EmailVerification />} />
+        <Route path="/reset-password" element={<ResetPasswordForm />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/profile" element={<TravelerProfile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/destinations" element={<Destinations />} />
+        <Route path="/destinations/:id" element={<DestinationDetails />} />
+        <Route path="/collections" element={<Collections />} />
+        <Route path="/collections/:slug" element={<CollectionDetail />} />
+        <Route path="/users/:id/profile" element={<PublicProfile />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/bookings" element={<MyBookings />} />
+        <Route path="/booking-success" element={<BookingSuccess />} />
+        <Route path="/booking-cancel" element={<BookingCancel />} />
+        <Route path="/agent/dashboard" element={<AgentDashboard />} />
+        <Route path="/agent/apply" element={<ApplyAsAgent />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/users/:id" element={<UserDetails />} />
+        <Route path="/admin/destinations" element={<AdminDestinations />} />
+        <Route path="/help" element={<HelpCenter />} />
+        <Route path="/compare" element={<CompareDestinations />} />
+        <Route path="/agent/clients" element={<ClientPortfolio />} />
+        <Route path="/agent/packages" element={<PackageBuilder />} />
+        <Route path="/agent/commissions" element={<CommissionDashboard />} />
       </Routes>
+      <ChatBot />
     </ErrorBoundary>
   );
 }

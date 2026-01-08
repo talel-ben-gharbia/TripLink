@@ -24,7 +24,7 @@ const CollectionDetail = () => {
         const data = await getCollectionBySlug(slug);
         setCollection(data);
       } catch (error) {
-        console.error('Failed to load collection:', error);
+        // Failed to load collection - error logged for debugging
         setError('Collection not found');
       } finally {
         setLoading(false);

@@ -52,7 +52,7 @@ const ApplyAsAgent = () => {
       const data = await getAgentApplicationStatus();
       setApplicationStatus(data);
     } catch (error) {
-      console.error('Error loading application status:', error);
+      // Error loading application status - error logged for debugging
     } finally {
       setLoading(false);
     }

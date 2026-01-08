@@ -143,7 +143,7 @@ function TravelerProfile() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      window.location.href = "/";
+      navigate("/");
       return;
     }
 
@@ -267,12 +267,11 @@ function TravelerProfile() {
         setTimeout(() => setSaving(false), 500);
       } else {
         setSaving(false);
-        alert("Failed to save profile");
+        showToast("Failed to save profile", "error", 5000);
       }
     } catch (err) {
-      console.error("Save error:", err);
       setSaving(false);
-      alert("Failed to save profile");
+      showToast("Failed to save profile", "error", 5000);
     }
   }, [personalityAxis, preferences]);
 
@@ -474,7 +473,7 @@ function TravelerProfile() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setTimeout(() => {
-          window.location.href = "/";
+          navigate("/");
         }, 1500);
       } else {
         setDeleteMsg({

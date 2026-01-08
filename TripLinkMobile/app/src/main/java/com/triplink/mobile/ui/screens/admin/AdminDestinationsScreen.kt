@@ -129,12 +129,12 @@ fun DestinationCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = destination.name,
+                text = destination.name ?: "Destination",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "${destination.city ?: ""}, ${destination.country}",
+                text = "${destination.city ?: ""}, ${destination.country ?: ""}",
                 style = MaterialTheme.typography.bodySmall
             )
             Text(

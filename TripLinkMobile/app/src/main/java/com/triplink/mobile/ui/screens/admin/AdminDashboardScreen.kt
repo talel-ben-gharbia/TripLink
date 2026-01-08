@@ -11,7 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +27,7 @@ import com.triplink.mobile.ui.components.Navbar
 import com.triplink.mobile.ui.theme.BackgroundCream
 import com.triplink.mobile.ui.viewmodel.AdminDashboardViewModel
 import com.triplink.mobile.ui.viewmodel.AdminTab
+import com.triplink.mobile.ui.viewmodel.AuthStateManager
 import com.triplink.mobile.ui.viewmodel.ViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,6 +44,34 @@ fun AdminDashboardScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val user by AuthStateManager.user.collectAsState()
+    val authRepository = LocalAppContainer.current.authRepository
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Load data when screen is displayed
+    LaunchedEffect(Unit) {
+        viewModel.loadDashboard()
+    }
+    
+    // Verify auth on mount like front-end AdminDashboard
+    LaunchedEffect(Unit) {
+        val storedUser = authRepository.getStoredUser()
+        if (storedUser == null || !storedUser.isAdmin && storedUser.roles?.contains("ROLE_ADMIN") != true) {
+            // Not admin, redirect handled by RequireAdmin guard
+            return@LaunchedEffect
+        }
+        // Verify token is still valid
+        val response = authRepository.getCurrentUser()
+        response.onSuccess { userResponse ->
+            if (!userResponse.user.isAdmin && userResponse.user.roles?.contains("ROLE_ADMIN") != true) {
+                navController.navigate(com.triplink.mobile.navigation.Screen.Home.route) {
+                    popUpTo(0)
+                }
+            }
+        }.onFailure {
+            // Token invalid, redirect handled by RequireAdmin guard
+        }
+    }
     
     Box(
         modifier = Modifier
@@ -51,9 +83,22 @@ fun AdminDashboardScreen(
         ) {
             Navbar(
                 navController = navController,
-                user = null, // TODO: Get from auth state
+                user = user,
                 onOpenAuth = {},
-                onLogout = {}
+                onLogout = {
+                    coroutineScope.launch {
+                        try {
+                            authRepository.logout()
+                        } catch (e: Exception) {
+                            // Log error but continue with logout
+                        } finally {
+                            AuthStateManager.clearUser()
+                            navController.navigate(com.triplink.mobile.navigation.Screen.Home.route) {
+                                popUpTo(0)
+                            }
+                        }
+                    }
+                }
             )
             
             Column(
@@ -148,70 +193,95 @@ fun OverviewTab(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            uiState.stats?.let { stats ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        title = "Total Users",
-                        value = stats.totalUsers.toString(),
-                        icon = Icons.Default.People,
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.setActiveTab(AdminTab.USERS) }
-                    )
-                    StatCard(
-                        title = "Destinations",
-                        value = stats.totalDestinations.toString(),
-                        icon = Icons.Default.LocationOn,
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.setActiveTab(AdminTab.DESTINATIONS) }
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        title = "Bookings",
-                        value = stats.totalBookings.toString(),
-                        icon = Icons.Default.CalendarToday,
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.setActiveTab(AdminTab.BOOKINGS) }
-                    )
-                    StatCard(
-                        title = "Collections",
-                        value = stats.totalCollections.toString(),
-                        icon = Icons.Default.Folder,
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.setActiveTab(AdminTab.COLLECTIONS) }
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        title = "Agents",
-                        value = stats.totalAgents.toString(),
-                        icon = Icons.Default.Person,
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.setActiveTab(AdminTab.AGENTS) }
-                    )
-                    StatCard(
-                        title = "Pending Apps",
-                        value = stats.pendingApplications.toString(),
-                        icon = Icons.Default.Schedule,
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.setActiveTab(AdminTab.AGENT_APPLICATIONS) }
-                    )
-                }
+            val stats = uiState.stats
+            val totalUsers = stats?.totalUsers ?: 0
+            val totalDestinations = uiState.destinations.size
+            val totalBookings = stats?.totalBookings ?: 0
+            val totalCollections = uiState.collections.size
+            val totalAgents = stats?.totalAgents ?: 0
+            val pendingApplications = stats?.pendingApplications ?: 0
+            val totalRevenue = stats?.totalRevenue ?: 0.0
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 StatCard(
-                    title = "Total Revenue",
-                    value = "$${String.format("%.2f", stats.totalRevenue)}",
-                    icon = Icons.Default.AttachMoney,
-                    modifier = Modifier.fillMaxWidth()
+                    title = "Total Users",
+                    value = totalUsers.toString(),
+                    icon = Icons.Default.People,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setActiveTab(AdminTab.USERS) }
                 )
+                StatCard(
+                    title = "Destinations",
+                    value = totalDestinations.toString(),
+                    icon = Icons.Default.LocationOn,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setActiveTab(AdminTab.DESTINATIONS) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    title = "Bookings",
+                    value = totalBookings.toString(),
+                    icon = Icons.Default.CalendarToday,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setActiveTab(AdminTab.BOOKINGS) }
+                )
+                StatCard(
+                    title = "Collections",
+                    value = totalCollections.toString(),
+                    icon = Icons.Default.Folder,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setActiveTab(AdminTab.COLLECTIONS) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    title = "Agents",
+                    value = totalAgents.toString(),
+                    icon = Icons.Default.Person,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setActiveTab(AdminTab.AGENTS) }
+                )
+                StatCard(
+                    title = "Pending Apps",
+                    value = pendingApplications.toString(),
+                    icon = Icons.Default.Schedule,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setActiveTab(AdminTab.AGENT_APPLICATIONS) }
+                )
+            }
+            StatCard(
+                title = "Total Revenue",
+                value = "$${String.format("%.2f", totalRevenue)}",
+                icon = Icons.Default.AttachMoney,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        
+        // Show error message if any
+        uiState.error?.let { error ->
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = "Error: $error",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
             }
         }
     }
@@ -428,12 +498,12 @@ fun DestinationCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = destination.name,
+                    text = destination.name ?: "Destination",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${destination.city ?: ""}, ${destination.country}",
+                    text = "${destination.city ?: ""}, ${destination.country ?: ""}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -627,14 +697,14 @@ fun AdminBookingCard(
                     }
                 ) {
                     Text(
-                        text = booking.status,
+                        text = booking.status ?: "UNKNOWN",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
             Text(
-                text = "$${String.format("%.2f", booking.totalPrice)}",
+                text = booking.totalPrice?.let { "$${String.format("%.2f", it)}" } ?: "N/A",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -791,7 +861,7 @@ fun AgentApplicationCard(
                     }
                 ) {
                     Text(
-                        text = application.status,
+                        text = application.status ?: "UNKNOWN",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall
                     )

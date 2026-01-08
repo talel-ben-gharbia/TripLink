@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,6 +20,7 @@ import com.triplink.mobile.ui.theme.BackgroundCream
 import com.triplink.mobile.ui.utils.LocalWindowSize
 import com.triplink.mobile.ui.utils.horizontalPadding
 import com.triplink.mobile.ui.utils.cardWidth
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.viewmodel.AuthViewModel
 import com.triplink.mobile.ui.viewmodel.HomeViewModel
 import com.triplink.mobile.ui.viewmodel.ViewModelFactory
@@ -47,19 +49,23 @@ fun HomeScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Navbar
+            // Navbar - uses AuthStateManager for user state
+            val currentUser by com.triplink.mobile.ui.viewmodel.AuthStateManager.user.collectAsState()
             Navbar(
                 navController = navController,
-                user = uiState.user,
+                user = currentUser,
                 onOpenAuth = { showAuthModal = true },
                 onLogout = {
                     viewModel.logout()
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0)
+                    }
                 }
             )
             
             // Hero section
             Hero(
-                showCTA = uiState.user == null,
+                showCTA = currentUser == null,
                 onStart = { showAuthModal = true }
             )
             
@@ -71,7 +77,11 @@ fun HomeScreen(
                 simple = true,
                 onSearch = { payload ->
                     // Navigate to destinations with search query
-                    navController.navigate("destinations")
+                    if (payload.destination.isNotEmpty()) {
+                        navController.navigate(Screen.Destinations.createRoute(payload.destination))
+                    } else {
+                        navController.navigate(Screen.Destinations.route)
+                    }
                 },
                 destinationRepository = appContainer.destinationRepository
             )
@@ -88,7 +98,7 @@ fun HomeScreen(
             )
             
             // Recommendations section (if user is logged in)
-            if (uiState.user != null && uiState.recommendations.isNotEmpty()) {
+            if (currentUser != null && uiState.recommendations.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
                 RecommendationsSection(
                     destinations = uiState.recommendations,
@@ -149,6 +159,7 @@ fun HomeScreen(
                 isOpen = showAuthModal,
                 onClose = { showAuthModal = false },
                 viewModel = authViewModel,
+                navController = navController,
                 onLoginSuccess = {
                     viewModel.refresh()
                 },

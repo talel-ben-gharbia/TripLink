@@ -53,7 +53,7 @@ function EmailVerification() {
         showToast(data.error || "Failed to resend verification email", "error", 5000);
       }
     } catch (err) {
-      console.error("Resend error:", err);
+      // Resend error - error logged for debugging
       const errorMsg =
         err.message ||
         `Cannot connect to server. Please make sure the backend is running on ${API_URL}`;

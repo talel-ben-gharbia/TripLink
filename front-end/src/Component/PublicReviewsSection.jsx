@@ -31,12 +31,10 @@ const PublicReviewsSection = ({ limit = 100 }) => {
         data = response.data.reviews;
       }
       
-      console.log('Public reviews loaded:', data.length, 'reviews', data);
+      // Public reviews loaded successfully
       setReviews(data);
     } catch (error) {
-      console.error('Failed to load public reviews:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
+      // Failed to load public reviews - error logged for debugging
       setError(error.message || 'Failed to load reviews');
       setReviews([]);
     } finally {
@@ -105,7 +103,7 @@ const PublicReviewsSection = ({ limit = 100 }) => {
             Be the first to share your travel experiences! Write a review on any destination to help other travelers.
           </p>
           <button
-            onClick={() => window.location.href = '/destinations'}
+            onClick={() => navigate('/destinations')}
             className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg hover:opacity-90 font-semibold transition-all hover:scale-105"
           >
             Explore Destinations

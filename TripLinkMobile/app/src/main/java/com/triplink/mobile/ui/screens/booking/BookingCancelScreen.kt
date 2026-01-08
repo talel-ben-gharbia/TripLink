@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Footer
 import com.triplink.mobile.ui.components.Navbar
 import com.triplink.mobile.ui.theme.BackgroundCream
@@ -23,7 +24,7 @@ import com.triplink.mobile.ui.theme.Purple600
 @Composable
 fun BookingCancelScreen(
     navController: NavController,
-    bookingId: String?
+    bookingId: Int?
 ) {
     Box(
         modifier = Modifier
@@ -86,7 +87,7 @@ fun BookingCancelScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Button(
-                                onClick = { navController.navigate("bookings") },
+                                onClick = { navController.navigate(Screen.MyBookings.route) },
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(56.dp),
@@ -114,7 +115,7 @@ fun BookingCancelScreen(
                             }
                             
                             OutlinedButton(
-                                onClick = { navController.navigate("home") },
+                                onClick = { navController.navigate(Screen.Home.route) },
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(56.dp)

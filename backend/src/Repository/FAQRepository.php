@@ -17,3 +17,5 @@ class FAQRepository extends ServiceEntityRepository
     }
 }
 
+
+

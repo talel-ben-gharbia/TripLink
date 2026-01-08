@@ -6,11 +6,13 @@ import com.triplink.mobile.data.remote.ApiService
 import com.triplink.mobile.data.remote.NetworkModule
 import com.triplink.mobile.data.repository.AuthRepository
 import com.triplink.mobile.data.repository.DestinationRepository
+import com.triplink.mobile.data.repository.TokenRefreshService
 
 class AppContainer(private val context: Context) {
     val tokenManager: AuthTokenManager by lazy { AuthTokenManager(context) }
     val apiService: ApiService by lazy { NetworkModule.createApiService(tokenManager) }
     val authRepository: AuthRepository by lazy { AuthRepository(apiService, tokenManager) }
+    val tokenRefreshService: TokenRefreshService by lazy { TokenRefreshService(apiService, tokenManager) }
     val destinationRepository: DestinationRepository by lazy { DestinationRepository(apiService) }
     val bookingRepository: com.triplink.mobile.data.repository.BookingRepository by lazy { 
         com.triplink.mobile.data.repository.BookingRepository(apiService) 
@@ -35,6 +37,9 @@ class AppContainer(private val context: Context) {
     }
     val travelDocumentRepository: com.triplink.mobile.data.repository.TravelDocumentRepository by lazy {
         com.triplink.mobile.data.repository.TravelDocumentRepository(apiService)
+    }
+    val itineraryRepository: com.triplink.mobile.data.repository.ItineraryRepository by lazy {
+        com.triplink.mobile.data.repository.ItineraryRepository(apiService)
     }
 }
 

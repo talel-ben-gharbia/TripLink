@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.triplink.mobile.di.LocalAppContainer
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Footer
 import com.triplink.mobile.ui.components.Navbar
 import com.triplink.mobile.ui.components.ResetPasswordForm
@@ -43,12 +44,12 @@ fun ResetPasswordScreen(navController: NavController) {
                     token = token,
                     authRepository = LocalAppContainer.current.authRepository,
                     onSuccess = {
-                        navController.navigate("home") {
+                        navController.navigate(Screen.Home.route) {
                             popUpTo("home") { inclusive = true }
                         }
                     },
                     onBack = {
-                        navController.navigate("home")
+                        navController.navigate(Screen.Home.route)
                     }
                 )
             }

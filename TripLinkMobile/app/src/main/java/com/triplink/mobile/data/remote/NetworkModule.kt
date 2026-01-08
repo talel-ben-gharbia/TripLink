@@ -3,6 +3,7 @@ package com.triplink.mobile.data.remote
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.triplink.mobile.data.local.AuthTokenManager
+import com.triplink.mobile.ui.viewmodel.AuthStateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,13 +46,14 @@ object NetworkModule {
             
             val response = chain.proceed(newRequest)
             
-            // Handle 401 - token expired
+            // Handle 401 - token expired (matching front-end api.js behavior)
             if (response.code == 401) {
-                // Clear token asynchronously (won't block)
+                // Clear token and user state asynchronously
                 CoroutineScope(Dispatchers.IO).launch {
                     tokenManager.clearToken()
+                    AuthStateManager.clearUser()
                 }
-                // Navigation to login will be handled by ViewModel
+                // Navigation to home will be handled by route guards
             }
             
             response

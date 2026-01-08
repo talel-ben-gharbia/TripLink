@@ -87,7 +87,10 @@ class DestinationsViewModel(
             }
             
             // Extract unique countries from destinations
-            val countries = _uiState.value.destinations.map { it.country }.distinct().sorted()
+            val countries = _uiState.value.destinations
+                .mapNotNull { it.country }
+                .distinct()
+                .sorted()
             _uiState.value = _uiState.value.copy(availableCountries = countries)
         }
     }
@@ -160,4 +163,7 @@ class DestinationsViewModel(
         loadDestinations()
     }
 }
+
+
+
 

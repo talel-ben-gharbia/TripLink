@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Footer
 import com.triplink.mobile.ui.components.LoadingSpinner
 import com.triplink.mobile.ui.components.Navbar
@@ -68,7 +69,7 @@ fun PublicProfileScreen(
                         Text(
                             text = error ?: "The profile you are looking for does not exist."
                         )
-                        Button(onClick = { navController.navigate("home") }) {
+                        Button(onClick = { navController.navigate(Screen.Home.route) }) {
                             Text("Go Home")
                         }
                     }

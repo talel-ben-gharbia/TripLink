@@ -368,13 +368,15 @@ const ClientPortfolio = () => {
                 </div>
 
                 {/* Messaging */}
-                <div className="mt-6">
-                  <ClientMessaging
-                    clientId={selectedClient.user?.id}
-                    clientName={`${selectedClient.user?.firstName || ''} ${selectedClient.user?.lastName || ''}`.trim() || selectedClient.user?.email}
-                    bookingId={selectedClient.bookings?.[0]?.id}
-                  />
-                </div>
+                {selectedClient.user?.id && (
+                  <div className="mt-6">
+                    <ClientMessaging
+                      clientId={selectedClient.user.id}
+                      clientName={`${selectedClient.user?.firstName || ''} ${selectedClient.user?.lastName || ''}`.trim() || selectedClient.user?.email || 'Client'}
+                      bookingId={selectedClient.bookings?.[0]?.id || null}
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-lg p-12 text-center">

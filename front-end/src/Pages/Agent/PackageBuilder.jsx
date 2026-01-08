@@ -120,13 +120,13 @@ const PackageBuilder = () => {
         await api.post('/api/agent/packages', packageData);
       }
 
-      alert('Package saved successfully!');
+      showToast('Package saved successfully!', 'success', 3000);
       resetForm();
       loadPackages();
       setShowBuilder(false);
     } catch (error) {
       console.error('Failed to save package:', error);
-      alert('Failed to save package: ' + (error.response?.data?.error || error.message));
+      showToast('Failed to save package: ' + (error.response?.data?.error || error.message), 'error', 5000);
     } finally {
       setSaving(false);
     }

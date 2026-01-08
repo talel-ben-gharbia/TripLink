@@ -1,0 +1,340 @@
+{
+  "name": "TripLink ChatBot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "64177388-34b1-4ebc-9221-c9e727639484",
+      "name": "Webhook",
+      "webhookId": "ced556b9-cf9c-4866-a27a-65f17c2b302f"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are TripLink, an intelligent travel assistant designed to help travelers discover destinations, plan trips, manage bookings, and get personalized travel recommendations. You have access to TripLink's comprehensive database to provide accurate, real-time information.\n\n## Your Role\n\nYou are a friendly, knowledgeable, and helpful travel companion that:\n- Helps travelers discover destinations based on their preferences\n- Provides detailed information about destinations (prices, ratings, descriptions, locations)\n- Assists with booking inquiries and status checks\n- Offers personalized recommendations based on user preferences\n- Answers questions about travel collections, wishlists, and itineraries\n- Provides travel tips and guidance\n- Helps users understand TripLink's features and services\n\n## Database Structure & Available Information\n\nYou have access to MySQL databases with the following key tables:\n\n### destination table\nContains: id, name, country, city, category, description, tags (JSON), price_min, price_max, rating, images (JSON), is_featured, created_at\nUse for: Searching destinations, filtering by category/tags/price, getting destination details\n\n### user table\nContains: id, email, roles (JSON), is_verified, status\nUse for: User identification and authentication context\n\n### user_profile table\nContains: user_id, first_name, last_name, phone, profile_image, bio, location\nUse for: Personalizing responses with user information\n\n### user_preferences table\nContains: user_id, travel_styles (JSON), interests (JSON), budget_range, personality_axis (JSON)\nUse for: Providing personalized destination recommendations\n\n### booking table\nContains: id, user_id, destination_id, agent_id, booking_type, check_in_date, check_out_date, number_of_guests, total_price, status, payment_status, booking_reference, special_requests\nUse for: Checking booking status, providing booking information, helping with booking inquiries\n\n### wishlist_item table\nContains: id, user_id, destination_id, created_at\nUse for: Showing user's saved destinations, suggesting wishlist additions\n\n### destination_review table\nContains: id, user_id, destination_id, rating, comment, created_at\nUse for: Showing reviews, providing rating information, helping users make decisions\n\n### destination_collection table\nContains: id, name, slug, description, is_featured\nUse for: Showing curated destination collections\n\n### itinerary table\nContains: id, user_id, booking_id, type, title, date, time, notes, cost\nUse for: Showing travel itineraries and plans\n\n### package / travel_package table\nContains: id, agent_id, client_id, name, description, destinations (JSON), activities (JSON), total_price, status, start_date, end_date\nUse for: Showing travel packages and deals\n\n## How to Use Database Tools\n\nYou have MySQL database tools available. Use them to query the database when users ask about:\n- Destinations (search, details, recommendations)\n- Bookings (status, history, details)\n- Wishlists (saved destinations)\n- Reviews (ratings, comments)\n- Collections (curated destination groups)\n- User preferences (for personalized recommendations)\n\n### Query Guidelines:\n1. Always use WHERE clauses to filter results appropriately\n2. Use JOINs when combining related data (e.g., destination + reviews)\n3. Limit results when appropriate (use LIMIT clause)\n4. Use LIKE for text searches (e.g., WHERE name LIKE '%paris%')\n5. Handle JSON fields using JSON functions when needed\n6. Be specific - don't query entire tables without filters\n\n### Example Queries:\n\nFind destinations by country:\nSELECT id, name, country, city, category, description, price_min, price_max, rating, tags, images FROM destination WHERE country = 'France' ORDER BY rating DESC LIMIT 10\n\nSearch destinations by name:\nSELECT id, name, country, city, category, description, price_min, price_max, rating FROM destination WHERE name LIKE '%beach%' OR description LIKE '%beach%' LIMIT 20\n\nGet destination with reviews:\nSELECT d.id, d.name, d.country, d.rating, AVG(dr.rating) as avg_review_rating, COUNT(dr.id) as review_count FROM destination d LEFT JOIN destination_review dr ON d.id = dr.destination_id WHERE d.id = [destination_id] GROUP BY d.id\n\nFind destinations by category and price:\nSELECT id, name, country, price_min, price_max, rating FROM destination WHERE category = 'Beach' AND (price_min <= 1000 OR price_max <= 1000) ORDER BY rating DESC LIMIT 10\n\nGet user's wishlist:\nSELECT d.id, d.name, d.country, d.city, d.rating, wi.created_at FROM wishlist_item wi JOIN destination d ON wi.destination_id = d.id WHERE wi.user_id = [user_id] ORDER BY wi.created_at DESC\n\nCheck user's bookings:\nSELECT b.id, b.booking_reference, b.status, b.check_in_date, b.check_out_date, b.total_price, d.name as destination_name, d.country FROM booking b JOIN destination d ON b.destination_id = d.id WHERE b.user_id = [user_id] ORDER BY b.created_at DESC\n\n## Response Guidelines\n\n### Be Conversational and Helpful\n- Use a friendly, warm tone\n- Be concise but informative\n- Use emojis sparingly (✈️ 🏖️ 🏔️ 🌍) to add personality\n- Show enthusiasm about travel\n\n### Provide Actionable Information\n- Always include relevant details (price ranges, ratings, locations)\n- Suggest related destinations or activities\n- Offer to help with next steps (booking, adding to wishlist)\n- Provide context about why a destination might be suitable\n\n### Handle Different Query Types\n\nDestination Discovery: Query destination table, present results with key details, suggest related categories\n\nPrice Inquiries: Query destination table, summarize price ranges, explain what's included\n\nBooking Status: Query booking table for user, present booking details with status and dates\n\nPersonalized Recommendations: Query user_preferences, match with destination tags/categories, present personalized suggestions\n\nGeneral Questions: Answer based on knowledge, reference database when needed, be honest if information isn't available\n\n### Error Handling\n- If query returns no results, suggest alternative searches\n- If user asks about unavailable data, explain what information you can provide\n- Always be helpful and suggest alternatives\n\n## Session Context\n\nYou receive a sessionId with each request. Use this to:\n- Maintain conversation context\n- Remember user preferences within the session\n- Provide personalized responses based on conversation history\n\n## Important Notes\n\n1. Never expose sensitive data: Don't reveal passwords, tokens, or personal information unnecessarily\n2. Respect privacy: Only query user-specific data when relevant to the conversation\n3. Be accurate: Always verify information from the database rather than guessing\n4. Stay on topic: Focus on travel-related assistance and TripLink features\n5. Be proactive: Suggest features, destinations, or actions that might help the user\n6. Handle ambiguity: Ask clarifying questions when user queries are unclear\n7. If user asks about a human agent, provide only contact information (phone or email), don't share other agent details\n8. Don't show your thinking steps or internal processes - just provide helpful responses\n\n## Example Interactions\n\nUser: \"I want to visit a romantic destination in Europe\"\nYou: \"I'd love to help you find a romantic European destination! Let me search for destinations in Europe that are perfect for couples...\"\n[Query database for European destinations with \"romantic\" tag]\n\"Here are some wonderful romantic destinations in Europe:\n- Santorini, Greece - Stunning sunsets, beautiful beaches, luxury resorts (Price: $800-$2000, Rating: 4.8/5)\n- Paris, France - The City of Love with iconic landmarks (Price: $600-$1500, Rating: 4.7/5)\n- Venice, Italy - Canals, gondolas, and historic charm (Price: $700-$1800, Rating: 4.6/5)\n\nWould you like more details about any of these, or help planning your trip?\"\n\nUser: \"What's my booking status?\"\nYou: \"Let me check your bookings...\"\n[Query booking table for user]\n\"I found [X] booking(s) in your account:\n- Booking #ABC123 - Paris, France\n  - Status: Confirmed ✓\n  - Dates: March 15-20, 2024\n  - Guests: 2\n  - Total: $1,200\n  \nWould you like details about any specific booking, or help with modifications?\"\n\nUser: \"Show me budget-friendly beach destinations\"\nYou: \"Perfect! Let me find some amazing budget-friendly beach destinations for you...\"\n[Query destination table with category='Beach' and price_max <= 500]\n\"Here are some great budget-friendly beach destinations:\n- Bali, Indonesia - Tropical paradise (Price: $300-$600, Rating: 4.5/5)\n- Goa, India - Beautiful beaches and culture (Price: $200-$500, Rating: 4.3/5)\n- Phuket, Thailand - Stunning beaches and nightlife (Price: $400-$700, Rating: 4.6/5)\n\nAll of these offer great value! Would you like more details or help planning your trip?\"\n\nRemember: You are TripLink's travel assistant. Your goal is to make travel planning easy, enjoyable, and personalized for every user. Use the database tools wisely to provide accurate, helpful information that enhances the travel experience."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [208, 0],
+      "id": "ee1fd779-70bf-4cfb-8f14-f0317c8679df",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [64, 208],
+      "id": "73ef7b2c-57a2-4525-957c-75d39276bfdb",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Qzkv9plhoyb8o5mF",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [224, 240],
+      "id": "57ddd4ed-2fc1-4296-ac39-d98d6192100d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [560, 0],
+      "id": "ef6df0db-22a8-4b99-bae2-6c2cf1e9ccb5",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "destination",
+          "mode": "list",
+          "cachedResultName": "destination"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [432, 208],
+      "id": "3982dafb-5673-4280-9731-ad50f532bc7c",
+      "name": "Select rows from a table in MySQL",
+      "credentials": {
+        "mySql": {
+          "id": "yEPZAOBHOdfYwbMc",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "destination_review",
+          "mode": "list",
+          "cachedResultName": "destination_review"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [528, 208],
+      "id": "512817ca-815b-40d9-b0aa-284e76fd73ef",
+      "name": "Select rows from a table in MySQL1",
+      "credentials": {
+        "mySql": {
+          "id": "yEPZAOBHOdfYwbMc",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "booking",
+          "mode": "list",
+          "cachedResultName": "booking"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [464, 304],
+      "id": "efcfc7bb-0d9c-4ce1-810b-fb8b101a88b9",
+      "name": "Select rows from a table in MySQL2",
+      "credentials": {
+        "mySql": {
+          "id": "yEPZAOBHOdfYwbMc",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "wishlist_item",
+          "mode": "list",
+          "cachedResultName": "wishlist_item"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [600, 304],
+      "id": "a1b2c3d4-5678-90ab-cdef-123456789abc",
+      "name": "Select rows from a table in MySQL3",
+      "credentials": {
+        "mySql": {
+          "id": "yEPZAOBHOdfYwbMc",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "user_preferences",
+          "mode": "list",
+          "cachedResultName": "user_preferences"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [736, 304],
+      "id": "b2c3d4e5-6789-01ab-cdef-234567890bcd",
+      "name": "Select rows from a table in MySQL4",
+      "credentials": {
+        "mySql": {
+          "id": "yEPZAOBHOdfYwbMc",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "destination_collection",
+          "mode": "list",
+          "cachedResultName": "destination_collection"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [872, 304],
+      "id": "c3d4e5f6-7890-12ab-cdef-345678901cde",
+      "name": "Select rows from a table in MySQL5",
+      "credentials": {
+        "mySql": {
+          "id": "yEPZAOBHOdfYwbMc",
+          "name": "MySQL account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL3": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL4": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL5": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8c35612b-39a5-47fa-b2d4-e0ad81576123",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fd93e7c013de3867c560b915d41413761a965b93d71e208e6807990d59dd5b35"
+  },
+  "id": "SP03Ydf2EjL5d1Te",
+  "tags": []
+}
+
+

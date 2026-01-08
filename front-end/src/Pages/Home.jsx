@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "../Component/Navbar";
 import DestinationSection from "../Component/DestinationSection";
 import AuthModal from "../Component/AuthModal";
@@ -23,6 +23,7 @@ import { trackPageView } from "../utils/analytics";
 
 
 function Home() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [backendStatus, setBackendStatus] = useState("checking");
@@ -161,7 +162,7 @@ function Home() {
 
         // Redirect admin users to admin dashboard
         if (parsedUser.isAdmin) {
-          window.location.href = "/admin";
+          navigate("/admin");
           return;
         }
       } catch (e) {
@@ -301,7 +302,7 @@ function Home() {
               {featuredDestinations.map((dest, idx) => (
                 <div
                   key={dest.id}
-                  onClick={() => window.location.href = `/destinations/${dest.id}`}
+                  onClick={() => navigate(`/destinations/${dest.id}`)}
                   className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 animate-fade-up"
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
@@ -387,7 +388,7 @@ function Home() {
                   {recommendations.map((rec, idx) => (
                     <div
                       key={rec.destination.id}
-                      onClick={() => window.location.href = `/destinations/${rec.destination.id}`}
+                      onClick={() => navigate(`/destinations/${rec.destination.id}`)}
                       className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 animate-fade-up relative"
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >

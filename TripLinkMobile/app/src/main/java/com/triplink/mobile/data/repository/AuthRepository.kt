@@ -6,6 +6,8 @@ import com.triplink.mobile.data.model.*
 import com.triplink.mobile.data.remote.ApiService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class AuthRepository(
     private val apiService: ApiService,
@@ -13,15 +15,76 @@ class AuthRepository(
 ) {
     suspend fun register(request: RegisterRequest): Result<AuthResponse> {
         return try {
-            val response = apiService.register(request)
-            if (response.isSuccessful && response.body() != null) {
-                val authResponse = response.body()!!
-                tokenManager.saveToken(authResponse.token)
-                authResponse.refresh_token?.let { tokenManager.saveRefreshToken(it) }
-                Gson().toJson(authResponse.user).let { tokenManager.saveUser(it) }
+            // Convert to multipart form data like front-end
+            val textPlain = "text/plain; charset=utf-8".toMediaType()
+            val emailBody = request.email.toRequestBody(textPlain)
+            val passwordBody = request.password.toRequestBody(textPlain)
+            val firstNameBody = request.firstName.toRequestBody(textPlain)
+            val lastNameBody = request.lastName.toRequestBody(textPlain)
+            val phoneBody = request.phone.toRequestBody(textPlain)
+            
+            // Convert travelStyles and interests to JSON strings (like front-end does)
+            val travelStylesBody = request.travelStyles?.let {
+                Gson().toJson(it).toRequestBody(textPlain)
+            }
+            val interestsBody = request.interests?.let {
+                Gson().toJson(it).toRequestBody(textPlain)
+            }
+            
+            val response = apiService.register(
+                email = emailBody,
+                password = passwordBody,
+                firstName = firstNameBody,
+                lastName = lastNameBody,
+                phone = phoneBody,
+                travelStyles = travelStylesBody,
+                interests = interestsBody,
+                profileImage = null // TODO: Add profile image support if needed
+            )
+            
+            if (response.isSuccessful) {
+                val body = response.body()
+                
+                // Backend returns either AuthResponse (with user/token) or just a message
+                // If body is null or user is null, registration succeeded but email verification needed
+                val authResponse = if (body != null && body.user != null && body.token != null) {
+                    // Has user and token - normal AuthResponse (user already verified)
+                    body
+                } else {
+                    // No user/token - registration succeeded, email verification needed
+                    // Backend returns: {"message": "User registered successfully. Please check your email..."}
+                    AuthResponse(
+                        token = null,
+                        user = null,
+                        refresh_token = null,
+                        message = body?.message ?: "User registered successfully. Please check your email to verify your account."
+                    )
+                }
+                
+                // Only save token if user is verified and token/user are present
+                if (authResponse.user != null && authResponse.token != null && authResponse.user.isVerified) {
+                    tokenManager.saveToken(authResponse.token)
+                    authResponse.refresh_token?.let { tokenManager.saveRefreshToken(it) }
+                    com.google.gson.Gson().toJson(authResponse.user).let { tokenManager.saveUser(it) }
+                } else {
+                    // Don't save token/user - user needs to verify email first
+                    // Clear any existing token
+                    tokenManager.clearToken()
+                }
                 Result.success(authResponse)
             } else {
-                Result.failure(Exception(response.message() ?: "Registration failed"))
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = if (errorBody != null) {
+                    try {
+                        val errorJson = com.google.gson.Gson().fromJson(errorBody, Map::class.java)
+                        (errorJson["error"] as? String) ?: (errorJson["message"] as? String) ?: response.message()
+                    } catch (e: Exception) {
+                        errorBody
+                    }
+                } else {
+                    response.message() ?: "Registration failed"
+                }
+                Result.failure(Exception(errorMessage ?: "Registration failed"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -33,9 +96,10 @@ class AuthRepository(
             val response = apiService.login(request)
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                tokenManager.saveToken(authResponse.token)
+                // Login always returns token and user
+                authResponse.token?.let { tokenManager.saveToken(it) }
                 authResponse.refresh_token?.let { tokenManager.saveRefreshToken(it) }
-                Gson().toJson(authResponse.user).let { tokenManager.saveUser(it) }
+                authResponse.user?.let { Gson().toJson(it).let { json -> tokenManager.saveUser(json) } }
                 Result.success(authResponse)
             } else {
                 Result.failure(Exception(response.message() ?: "Login failed"))
@@ -80,7 +144,8 @@ class AuthRepository(
             val response = apiService.refreshToken()
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                tokenManager.saveToken(authResponse.token)
+                // Refresh token always returns a new token
+                authResponse.token?.let { tokenManager.saveToken(it) }
                 authResponse.refresh_token?.let { tokenManager.saveRefreshToken(it) }
                 Result.success(authResponse)
             } else {
@@ -110,6 +175,10 @@ class AuthRepository(
         } catch (e: Exception) {
             null
         }
+    }
+    
+    suspend fun saveUser(user: UserData) {
+        Gson().toJson(user).let { tokenManager.saveUser(it) }
     }
     
     suspend fun submitOnboarding(
@@ -268,6 +337,19 @@ class AuthRepository(
                 Result.success(response.body()!!)
             } else {
                 Result.failure(Exception(response.message() ?: "Failed to get profile activity"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun resendVerification(): Result<ApiResponse> {
+        return try {
+            val response = apiService.resendVerification()
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ApiResponse(success = true))
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to resend verification email"))
             }
         } catch (e: Exception) {
             Result.failure(e)

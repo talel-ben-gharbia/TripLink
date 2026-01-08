@@ -652,21 +652,22 @@ class AgentController extends AbstractController
                 return $this->json(['error' => 'Client not found in your portfolio'], 404);
             }
 
-            try {
-                $message = new AgentMessage();
-                $message->setAgent($agent);
-                $message->setClient($client);
-                $message->setSubject(trim($data['subject']));
-                $message->setMessage(trim($data['message']));
-                $message->setDirection('TO_CLIENT');
+            // Create message entity
+            $message = new AgentMessage();
+            $message->setAgent($agent);
+            $message->setClient($client);
+            $message->setSubject(trim($data['subject']));
+            $message->setMessage(trim($data['message']));
+            $message->setDirection('TO_CLIENT');
 
-                if (!empty($data['bookingId'])) {
-                    $booking = $this->bookingRepository->find($data['bookingId']);
-                    if ($booking && ($booking->getAgent()?->getId() === $agent->getId() || $agent->isAdmin())) {
-                        $message->setBooking($booking);
-                    }
+            if (!empty($data['bookingId'])) {
+                $booking = $this->bookingRepository->find($data['bookingId']);
+                if ($booking && ($booking->getAgent()?->getId() === $agent->getId() || $agent->isAdmin())) {
+                    $message->setBooking($booking);
                 }
+            }
 
+            try {
                 $this->em->persist($message);
                 $this->em->flush();
             } catch (\Exception $e) {
@@ -678,32 +679,32 @@ class AgentController extends AbstractController
                 ], 500);
             }
 
-        // Send notification to client
-        try {
-            if ($this->notificationService) {
-                $agentName = 'Your Agent';
-                $profile = $agent->getProfile();
-                if ($profile) {
-                    $firstName = $profile->getFirstName() ?? '';
-                    $lastName = $profile->getLastName() ?? '';
-                    $agentName = trim($firstName . ' ' . $lastName) ?: 'Your Agent';
+            // Send notification to client
+            try {
+                if ($this->notificationService) {
+                    $agentName = 'Your Agent';
+                    $profile = $agent->getProfile();
+                    if ($profile) {
+                        $firstName = $profile->getFirstName() ?? '';
+                        $lastName = $profile->getLastName() ?? '';
+                        $agentName = trim($firstName . ' ' . $lastName) ?: 'Your Agent';
+                    }
+                    
+                    $this->notificationService->createNotification(
+                        $client,
+                        'agent_message',
+                        'New Message from Agent',
+                        "You have a new message: {$data['subject']}",
+                        'message',
+                        $message->getId(),
+                        "/messages?agent={$agent->getId()}",
+                        ['agentName' => $agentName]
+                    );
                 }
-                
-                $this->notificationService->createNotification(
-                    $client,
-                    'agent_message',
-                    'New Message from Agent',
-                    "You have a new message: {$data['subject']}",
-                    'message',
-                    $message->getId(),
-                    "/messages?agent={$agent->getId()}",
-                    ['agentName' => $agentName]
-                );
+            } catch (\Exception $e) {
+                // Log error but don't fail the message sending
+                error_log('Failed to send notification: ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            // Log error but don't fail the message sending
-            error_log('Failed to send notification: ' . $e->getMessage());
-        }
 
             return $this->json([
                 'message' => 'Message sent successfully',

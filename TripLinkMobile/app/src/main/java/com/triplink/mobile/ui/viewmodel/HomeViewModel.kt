@@ -52,18 +52,28 @@ class HomeViewModel(
     private fun loadUser() {
         viewModelScope.launch {
             val user = authRepo.getStoredUser()
-            _uiState.value = _uiState.value.copy(user = user)
-            
             if (user != null) {
-                // Check if needs onboarding
+                AuthStateManager.setUser(user)
+                // Verify token is still valid by calling /api/me
                 val result = authRepo.getCurrentUser()
                 result.onSuccess { response ->
+                    val verifiedUser = response.user
+                    authRepo.saveUser(verifiedUser)
+                    AuthStateManager.setUser(verifiedUser)
                     _uiState.value = _uiState.value.copy(
-                        user = response.user,
+                        user = verifiedUser,
                         showOnboarding = response.needsOnboarding == true
                     )
                     loadRecommendations()
+                }.onFailure {
+                    // Token invalid, clear storage
+                    authRepo.logout()
+                    AuthStateManager.clearUser()
+                    _uiState.value = _uiState.value.copy(user = null)
                 }
+            } else {
+                AuthStateManager.clearUser()
+                _uiState.value = _uiState.value.copy(user = null)
             }
         }
     }
@@ -112,6 +122,7 @@ class HomeViewModel(
     fun logout() {
         viewModelScope.launch {
             authRepo.logout()
+            AuthStateManager.clearUser()
             _uiState.value = _uiState.value.copy(
                 user = null,
                 recommendations = emptyList()

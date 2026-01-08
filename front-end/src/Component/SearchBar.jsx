@@ -43,7 +43,7 @@ function SearchBar({ compact = false, simple = false, onSearch }) {
           const suggestions = await getAutocompleteSuggestions(destination, 8);
           setAutocompleteSuggestions(suggestions || []);
         } catch (error) {
-          console.error('Autocomplete error:', error);
+          // Autocomplete error - error logged for debugging
           setAutocompleteSuggestions([]);
         } finally {
           setLoadingSuggestions(false);

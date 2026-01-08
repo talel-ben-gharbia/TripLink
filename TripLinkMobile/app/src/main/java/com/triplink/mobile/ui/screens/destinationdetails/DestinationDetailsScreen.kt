@@ -266,7 +266,7 @@ fun DestinationDetailsContent(
                     ) {
                         AsyncImage(
                             model = images[currentImageIndex],
-                            contentDescription = destination.name,
+                            contentDescription = destination.name ?: "Destination",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -391,7 +391,7 @@ fun DestinationDetailsContent(
                                     modifier = Modifier.padding(bottom = 8.dp)
                                 ) {
                                     Text(
-                                        text = destination.name,
+                                        text = destination.name ?: "Destination",
                                         style = titleStyle,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -471,7 +471,7 @@ fun DestinationDetailsContent(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Text(
-                                        text = destination.city?.let { "$it, ${destination.country}" } ?: destination.country,
+                                        text = destination.city?.let { "$it, ${destination.country ?: ""}" } ?: (destination.country ?: "Location not specified"),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                     )
@@ -516,9 +516,9 @@ fun DestinationDetailsContent(
                         }
                         
                         // Description
-                        if (destination.description.isNotEmpty()) {
+                        if (!destination.description.isNullOrEmpty()) {
                             Text(
-                                text = destination.description,
+                                text = destination.description ?: "",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                 lineHeight = androidx.compose.ui.unit.TextUnit(24f, androidx.compose.ui.unit.TextUnitType.Sp)
@@ -528,8 +528,8 @@ fun DestinationDetailsContent(
                         // Social Share
                         SocialShare(
                             url = "https://triplink.com/destinations/${destination.id}",
-                            title = destination.name,
-                            description = destination.description,
+                            title = destination.name ?: "Destination",
+                            description = destination.description ?: "",
                             modifier = Modifier.padding(top = 8.dp)
                         )
                         
@@ -628,44 +628,27 @@ fun DestinationDetailsContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Book Now Button (full width on mobile)
-                                Button(
+                                // Book on Web Info Button (full width on mobile)
+                                OutlinedButton(
                                     onClick = { viewModel.showBookingModal(true) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(48.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.Transparent
-                                    )
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                brush = Brush.horizontalGradient(
-                                                    colors = listOf(Purple600, Blue500)
-                                                ),
-                                                shape = RoundedCornerShape(8.dp)
-                                            ),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.CalendarToday,
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Text(
-                                                text = "Book Now",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = Color.White,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "Book on Web",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
                                     }
                                 }
                                 
@@ -709,44 +692,27 @@ fun DestinationDetailsContent(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Book Now Button (flex-1)
-                                Button(
+                                // Book on Web Info Button (flex-1)
+                                OutlinedButton(
                                     onClick = { viewModel.showBookingModal(true) },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(48.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.Transparent
-                                    )
+                                        .height(48.dp)
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                brush = Brush.horizontalGradient(
-                                                    colors = listOf(Purple600, Blue500)
-                                                ),
-                                                shape = RoundedCornerShape(8.dp)
-                                            ),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.CalendarToday,
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Text(
-                                                text = "Book Now",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = Color.White,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "Book on Web",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
                                     }
                                 }
                                 
@@ -787,7 +753,7 @@ fun DestinationDetailsContent(
             }
             
             // Travel Info Section (before Reviews, matching frontend)
-            if (destination.country.isNotEmpty()) {
+            if (!destination.country.isNullOrEmpty()) {
                 TravelInfo(
                     destination = destination,
                     modifier = Modifier.fillMaxWidth()
@@ -814,7 +780,7 @@ fun DestinationDetailsContent(
                 onNext = {
                     modalImageIndex = (modalImageIndex + 1) % images.size
                 },
-                destinationName = destination.name
+                destinationName = destination.name ?: "Destination"
             )
         }
         

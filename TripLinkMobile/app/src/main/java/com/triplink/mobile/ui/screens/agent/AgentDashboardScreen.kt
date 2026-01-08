@@ -10,7 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -25,6 +28,7 @@ import com.triplink.mobile.ui.theme.BackgroundCream
 import com.triplink.mobile.ui.theme.Blue500
 import com.triplink.mobile.ui.theme.Purple600
 import com.triplink.mobile.ui.viewmodel.AgentDashboardViewModel
+import com.triplink.mobile.ui.viewmodel.AuthStateManager
 import com.triplink.mobile.ui.viewmodel.ViewModelFactory
 
 @Composable
@@ -39,6 +43,34 @@ fun AgentDashboardScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val user by AuthStateManager.user.collectAsState()
+    val authRepository = LocalAppContainer.current.authRepository
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Load data when screen is displayed
+    LaunchedEffect(Unit) {
+        viewModel.loadDashboard()
+    }
+    
+    // Verify auth on mount like front-end AgentDashboard
+    LaunchedEffect(Unit) {
+        val storedUser = authRepository.getStoredUser()
+        if (storedUser == null || !storedUser.isAgent && storedUser.roles?.contains("ROLE_AGENT") != true) {
+            // Not agent, redirect handled by RequireAgent guard
+            return@LaunchedEffect
+        }
+        // Verify token is still valid
+        val response = authRepository.getCurrentUser()
+        response.onSuccess { userResponse ->
+            if (!userResponse.user.isAgent && userResponse.user.roles?.contains("ROLE_AGENT") != true) {
+                navController.navigate(com.triplink.mobile.navigation.Screen.Home.route) {
+                    popUpTo(0)
+                }
+            }
+        }.onFailure {
+            // Token invalid, redirect handled by RequireAgent guard
+        }
+    }
     
     Box(
         modifier = Modifier
@@ -50,9 +82,22 @@ fun AgentDashboardScreen(
         ) {
             Navbar(
                 navController = navController,
-                user = null, // TODO: Get from auth state
+                user = user,
                 onOpenAuth = {},
-                onLogout = {}
+                onLogout = {
+                    coroutineScope.launch {
+                        try {
+                            authRepository.logout()
+                        } catch (e: Exception) {
+                            // Log error but continue with logout
+                        } finally {
+                            AuthStateManager.clearUser()
+                            navController.navigate(com.triplink.mobile.navigation.Screen.Home.route) {
+                                popUpTo(0)
+                            }
+                        }
+                    }
+                }
             )
             
             Column(
@@ -380,7 +425,7 @@ fun BookingCard(
                     }
                 ) {
                     Text(
-                        text = booking.status,
+                        text = booking.status ?: "UNKNOWN",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -388,7 +433,7 @@ fun BookingCard(
             }
             
             Text(
-                text = "Date: ${booking.checkInDate ?: booking.travelDate}",
+                text = "Date: ${booking.checkInDate ?: booking.travelDate ?: "Not set"}",
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
@@ -396,7 +441,7 @@ fun BookingCard(
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = "Total: $${String.format("%.0f", booking.totalPrice)}",
+                text = "Total: ${booking.totalPrice?.let { "$${String.format("%.0f", it)}" } ?: "Not available"}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold
             )

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Lock } from "lucide-react";
 import { Eye } from "lucide-react";
 import { EyeOff } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
 
 export default function ResetPasswordForm() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
@@ -76,7 +77,7 @@ export default function ResetPasswordForm() {
         setSuccess(true);
         setMessage("Password reset successfully! Redirecting to login...");
         setTimeout(() => {
-          window.location.href = "/";
+          navigate("/");
         }, 2000);
       } else {
         setMessage(data.error || "Something went wrong");

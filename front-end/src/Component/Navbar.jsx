@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Menu, X } from "lucide-react";
 import { API_URL } from "../config";
 import api from "../api";
@@ -7,6 +7,7 @@ import NotificationCenter from "./NotificationCenter";
 import DarkModeToggle from "./DarkModeToggle";
 
 function Navbar({ openAuth }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   const verifyAuth = async () => {
@@ -63,7 +64,7 @@ function Navbar({ openAuth }) {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    window.location.href = "/";
+    navigate("/");
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -117,26 +118,64 @@ function Navbar({ openAuth }) {
           </li>
           {user && (
             <>
-              <li>
-                <Link to="/wishlist" className="hover:text-primary transition-colors font-medium">
-                  Wishlist
-                </Link>
-              </li>
-              <li>
-                <Link to="/bookings" className="hover:text-primary transition-colors font-medium">
-                  My Bookings
-                </Link>
-              </li>
-              {user.isAgent && (
-                <li>
-                  <Link to="/agent/dashboard" className="hover:text-primary transition-colors font-medium">
-                    Agent Dashboard
-                  </Link>
-                </li>
+              {/* Agent Navigation - Similar to Admin */}
+              {user.isAgent ? (
+                <>
+                  <li>
+                    <Link to="/agent/dashboard" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">Dashboard</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/agent/clients" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">Clients</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/agent/packages" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">Packages</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/agent/commissions" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">Commissions</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                </>
+              ) : user.isAdmin ? (
+                <>
+                  <li>
+                    <Link to="/admin" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">Admin</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  {/* Traveler Navigation */}
+                  <li>
+                    <Link to="/wishlist" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">Wishlist</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/bookings" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                      <span className="relative z-10">My Bookings</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                  </li>
+                </>
               )}
               <li>
-                <Link to="/profile" className="hover:text-primary transition-colors font-medium">
-                  Profile
+                <Link to="/profile" className="hover:text-primary transition-all duration-200 font-medium relative group">
+                  <span className="relative z-10">Profile</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               </li>
             </>
@@ -171,6 +210,13 @@ function Navbar({ openAuth }) {
                 <span className="font-medium hidden lg:inline">
                   {user.firstName} {user.lastName}
                 </span>
+                {(user.isAgent || user.isAdmin) && (
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold hidden lg:inline ${
+                    user.isAdmin ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'
+                  }`}>
+                    {user.isAdmin ? 'Admin' : 'Agent'}
+                  </span>
+                )}
               </div>
               <button
                 onClick={handleLogout}
@@ -195,7 +241,7 @@ function Navbar({ openAuth }) {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200">
+        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
           <div className="px-4 py-4 space-y-3">
             <Link
               to="/"
@@ -211,30 +257,73 @@ function Navbar({ openAuth }) {
             >
               Destinations
             </Link>
+            <Link
+              to="/collections"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+            >
+              Collections
+            </Link>
             {user ? (
               <>
-                <Link
-                  to="/wishlist"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
-                >
-                  Wishlist
-                </Link>
-                <Link
-                  to="/bookings"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
-                >
-                  My Bookings
-                </Link>
-                {user?.isAgent && (
+                {/* Agent Mobile Navigation */}
+                {user.isAgent ? (
+                  <>
+                    <Link
+                      to="/agent/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/agent/clients"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    >
+                      Clients
+                    </Link>
+                    <Link
+                      to="/agent/packages"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    >
+                      Packages
+                    </Link>
+                    <Link
+                      to="/agent/commissions"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    >
+                      Commissions
+                    </Link>
+                  </>
+                ) : user.isAdmin ? (
                   <Link
-                    to="/agent/dashboard"
+                    to="/admin"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
                   >
-                    Agent Dashboard
+                    Admin Dashboard
                   </Link>
+                ) : (
+                  <>
+                    {/* Traveler Mobile Navigation */}
+                    <Link
+                      to="/wishlist"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    >
+                      Wishlist
+                    </Link>
+                    <Link
+                      to="/bookings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    >
+                      My Bookings
+                    </Link>
+                  </>
                 )}
                 <Link
                   to="/profile"
@@ -249,6 +338,13 @@ function Navbar({ openAuth }) {
                     <span className="font-medium">
                       {user.firstName} {user.lastName}
                     </span>
+                    {(user.isAgent || user.isAdmin) && (
+                      <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        user.isAdmin ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        {user.isAdmin ? 'Admin' : 'Agent'}
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => {

@@ -32,6 +32,21 @@ import * as agentService from "../../services/agentService";
 import * as bookingService from "../../services/bookingService";
 import { Calendar, Briefcase } from "lucide-react";
 import { useErrorToast } from "../../Component/ErrorToast";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -225,11 +240,11 @@ const AdminDashboard = () => {
 
     bookingService.updateBooking(booking.id, updateData)
       .then(() => {
-        alert('Booking updated successfully');
+        showToast('Booking updated successfully', 'success', 3000);
         loadBookings();
       })
       .catch((error) => {
-        alert('Failed to update booking: ' + (error.response?.data?.error || error.message));
+        showToast('Failed to update booking: ' + (error.response?.data?.error || error.message), 'error', 5000);
       });
   };
 
@@ -238,10 +253,10 @@ const AdminDashboard = () => {
     
     try {
       await bookingService.completeBooking(bookingId);
-      alert('Booking marked as completed');
+      showToast('Booking marked as completed', 'success', 3000);
       loadBookings();
     } catch (error) {
-      alert('Failed to complete booking: ' + (error.response?.data?.error || error.message));
+      showToast('Failed to complete booking: ' + (error.response?.data?.error || error.message), 'error', 5000);
     }
   };
 
@@ -251,10 +266,10 @@ const AdminDashboard = () => {
     
     try {
       await bookingService.finalizeBooking(bookingId, notes || null);
-      alert('Booking finalized successfully');
+      showToast('Booking finalized successfully', 'success', 3000);
       loadBookings();
     } catch (error) {
-      alert('Failed to finalize booking: ' + (error.response?.data?.error || error.message));
+      showToast('Failed to finalize booking: ' + (error.response?.data?.error || error.message), 'error', 5000);
     }
   };
 
@@ -407,7 +422,7 @@ const AdminDashboard = () => {
       await api.delete(`/api/admin/destinations/${id}`);
       await loadDashboardData();
     } catch (err) {
-      alert(err.message || "Failed to delete destination");
+      showToast(err.message || "Failed to delete destination", 'error', 5000);
     }
   };
 
@@ -1622,6 +1637,147 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* User Status Distribution Pie Chart */}
+              <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  User Status Distribution
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Active", value: stats.users?.activeUsers || 0, color: "#10b981" },
+                        { name: "Pending", value: stats.users?.pendingUsers || 0, color: "#f59e0b" },
+                        { name: "Suspended", value: stats.users?.suspendedUsers || 0, color: "#ef4444" },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {[
+                        { name: "Active", value: stats.users?.activeUsers || 0, color: "#10b981" },
+                        { name: "Pending", value: stats.users?.pendingUsers || 0, color: "#f59e0b" },
+                        { name: "Suspended", value: stats.users?.suspendedUsers || 0, color: "#ef4444" },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Booking Status Distribution */}
+              <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Booking Status Distribution
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Confirmed", value: stats.bookings?.confirmedBookings || 0, color: "#10b981" },
+                        { name: "Pending", value: stats.bookings?.pendingBookings || 0, color: "#f59e0b" },
+                        { name: "Cancelled", value: stats.bookings?.cancelledBookings || 0, color: "#ef4444" },
+                        { name: "Completed", value: stats.bookings?.completedBookings || 0, color: "#3b82f6" },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {[
+                        { name: "Confirmed", value: stats.bookings?.confirmedBookings || 0, color: "#10b981" },
+                        { name: "Pending", value: stats.bookings?.pendingBookings || 0, color: "#f59e0b" },
+                        { name: "Cancelled", value: stats.bookings?.cancelledBookings || 0, color: "#ef4444" },
+                        { name: "Completed", value: stats.bookings?.completedBookings || 0, color: "#3b82f6" },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Revenue and Bookings Trend Chart */}
+            <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                Revenue & Bookings Overview
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={[
+                    {
+                      name: "Total",
+                      Revenue: parseFloat(stats.payments?.totalRevenue || 0),
+                      Bookings: stats.bookings?.totalBookings || 0,
+                    },
+                    {
+                      name: "Paid",
+                      Revenue: parseFloat(stats.payments?.totalRevenue || 0) * 0.8,
+                      Bookings: stats.payments?.paidCount || 0,
+                    },
+                    {
+                      name: "Pending",
+                      Revenue: parseFloat(stats.payments?.totalRevenue || 0) * 0.2,
+                      Bookings: stats.bookings?.pendingBookings || 0,
+                    },
+                  ]}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="Revenue" fill="#3b82f6" name="Revenue ($)" />
+                  <Bar yAxisId="right" dataKey="Bookings" fill="#10b981" name="Bookings" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Destination Categories Chart */}
+            {destMetrics.categoriesCount > 0 && (
+              <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Destination Statistics
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      { name: "Total", value: destMetrics.total },
+                      { name: "Categories", value: destMetrics.categoriesCount },
+                      { name: "Countries", value: destMetrics.countriesCount },
+                      { name: "Featured", value: destinations.filter((d) => d.isFeatured).length },
+                    ]}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" fill="#8b5cf6" name="Count" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
             <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-900">

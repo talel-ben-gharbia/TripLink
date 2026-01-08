@@ -43,22 +43,77 @@ const ClientMessaging = ({ clientId, clientName, bookingId = null }) => {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!subject.trim() || !message.trim()) {
+    
+    // Validation
+    const trimmedSubject = subject.trim();
+    const trimmedMessage = message.trim();
+    
+    if (!trimmedSubject || !trimmedMessage) {
       showToast('Please enter both subject and message', 'warning', 3000);
+      return;
+    }
+
+    if (trimmedSubject.length > 255) {
+      showToast('Subject must be 255 characters or less', 'error', 3000);
+      return;
+    }
+
+    if (trimmedMessage.length > 10000) {
+      showToast('Message must be 10,000 characters or less', 'error', 3000);
+      return;
+    }
+
+    if (!clientId) {
+      showToast('Client ID is missing. Please refresh the page.', 'error', 5000);
       return;
     }
 
     setSending(true);
     try {
-      await agentService.sendMessage(clientId, subject, message, bookingId);
-      setSubject('');
-      setMessage('');
-      setShowForm(false);
-      showToast('Message sent successfully!', 'success', 3000);
-      loadConversation();
+      const result = await agentService.sendMessage(
+        parseInt(clientId), 
+        trimmedSubject, 
+        trimmedMessage, 
+        bookingId ? parseInt(bookingId) : null
+      );
+      
+      if (result && (result.message || result.messageData)) {
+        setSubject('');
+        setMessage('');
+        setShowForm(false);
+        showToast('Message sent successfully!', 'success', 3000);
+        // Reload conversation after a short delay to ensure backend has processed
+        setTimeout(() => {
+          loadConversation();
+        }, 800);
+      } else {
+        showToast('Message sent but received unexpected response', 'warning', 3000);
+        setTimeout(() => {
+          loadConversation();
+        }, 800);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
-      const errorMsg = error.response?.data?.error || error.message || 'Failed to send message. Please try again.';
+      let errorMsg = 'Failed to send message. Please try again.';
+      
+      if (error.response) {
+        const responseData = error.response.data || {};
+        errorMsg = responseData.error || responseData.message || errorMsg;
+        
+        // Handle specific error codes
+        if (error.response.status === 404) {
+          errorMsg = 'Client not found. Please refresh the page.';
+        } else if (error.response.status === 403) {
+          errorMsg = 'You do not have permission to send messages to this client.';
+        } else if (error.response.status === 400) {
+          errorMsg = responseData.error || 'Invalid message data. Please check your input.';
+        }
+      } else if (error.request) {
+        errorMsg = 'Network error: Unable to reach server. Please check your connection.';
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
       showToast(errorMsg, 'error', 5000);
     } finally {
       setSending(false);

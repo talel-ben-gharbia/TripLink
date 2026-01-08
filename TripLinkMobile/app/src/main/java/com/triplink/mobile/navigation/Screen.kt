@@ -3,7 +3,13 @@ package com.triplink.mobile.navigation
 sealed class Screen(val route: String) {
     // Public screens
     object Home : Screen("home")
-    object Destinations : Screen("destinations")
+    object Destinations : Screen("destinations?query={query}") {
+        fun createRoute(query: String? = null) = if (query != null && query.isNotEmpty()) {
+            "destinations?query=${java.net.URLEncoder.encode(query, "UTF-8")}"
+        } else {
+            "destinations"
+        }
+    }
     object DestinationDetails : Screen("destinations/{id}") {
         fun createRoute(id: Int) = "destinations/$id"
     }
@@ -27,8 +33,13 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object Wishlist : Screen("wishlist")
     object MyBookings : Screen("bookings")
-    object BookingSuccess : Screen("booking-success")
-    object BookingCancel : Screen("booking-cancel")
+    object BookingSuccess : Screen("booking-success") {
+        fun createRoute(sessionId: String?, bookingId: Int?) = 
+            "booking-success?session_id=${sessionId ?: ""}&booking_id=${bookingId ?: ""}"
+    }
+    object BookingCancel : Screen("booking-cancel") {
+        fun createRoute(bookingId: Int?) = "booking-cancel?booking_id=${bookingId ?: ""}"
+    }
     
     // Agent screens
     object AgentDashboard : Screen("agent/dashboard")

@@ -23,9 +23,12 @@ class BookingRepository(
         return try {
             val response = apiService.getMyBookings()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                // Backend returns { "bookings": [...] }
+                Result.success(body.bookings)
             } else {
-                Result.failure(Exception(response.message() ?: "Failed to fetch bookings"))
+                val errorBody = response.errorBody()?.string()
+                Result.failure(Exception(errorBody ?: response.message() ?: "Failed to fetch bookings"))
             }
         } catch (e: Exception) {
             Result.failure(e)

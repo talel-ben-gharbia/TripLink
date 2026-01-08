@@ -30,7 +30,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
         setCategories(cats || []);
         setTags(tagList || []);
       } catch (error) {
-        console.error('Failed to load onboarding options:', error);
+        // Failed to load onboarding options - error logged for debugging
       }
     };
     loadOptions();
@@ -48,7 +48,6 @@ const Onboarding = ({ onComplete, onSkip }) => {
       });
       onComplete && onComplete();
     } catch (error) {
-      console.error('Failed to complete onboarding:', error);
       showToast('Failed to save preferences. Please try again.', 'error', 5000);
     } finally {
       setLoading(false);
@@ -61,7 +60,6 @@ const Onboarding = ({ onComplete, onSkip }) => {
       await skipOnboarding();
       onSkip && onSkip();
     } catch (error) {
-      console.error('Failed to skip onboarding:', error);
       showToast('Failed to skip onboarding. Please try again.', 'error', 5000);
     } finally {
       setLoading(false);

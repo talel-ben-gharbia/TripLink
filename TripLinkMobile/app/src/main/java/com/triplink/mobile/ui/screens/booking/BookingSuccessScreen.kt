@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -14,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.triplink.mobile.di.LocalAppContainer
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Footer
 import com.triplink.mobile.ui.components.LoadingSpinner
 import com.triplink.mobile.ui.components.Navbar
@@ -24,19 +27,34 @@ import com.triplink.mobile.ui.theme.Purple600
 @Composable
 fun BookingSuccessScreen(
     navController: NavController,
-    bookingId: String?,
+    bookingId: Int?,
     sessionId: String?
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var bookingReference by remember { mutableStateOf<String?>(null) }
+    val bookingRepository = LocalAppContainer.current.bookingRepository
     
     LaunchedEffect(bookingId, sessionId) {
         if (bookingId != null && sessionId != null) {
-            // TODO: Verify checkout session via BookingRepository
-            // For now, simulate success
-            isLoading = false
-            bookingReference = "TRP-${System.currentTimeMillis()}"
+            isLoading = true
+            launch {
+                val result = bookingRepository.verifyCheckoutSession(bookingId, sessionId)
+                result.onSuccess {
+                    // Get booking details to show reference
+                    val bookingResult = bookingRepository.getBooking(bookingId)
+                    bookingResult.onSuccess { booking ->
+                        bookingReference = booking.bookingReference
+                        isLoading = false
+                    }.onFailure {
+                        // Still show success even if we can't get booking details
+                        isLoading = false
+                    }
+                }.onFailure { e ->
+                    error = e.message ?: "Payment verification failed"
+                    isLoading = false
+                }
+            }
         } else {
             error = "Missing payment information"
             isLoading = false
@@ -71,14 +89,14 @@ fun BookingSuccessScreen(
                     error != null -> {
                         ErrorContent(
                             error = error!!,
-                            onViewBookings = { navController.navigate("bookings") }
+                            onViewBookings = { navController.navigate(Screen.MyBookings.route) }
                         )
                     }
                     else -> {
                         SuccessContent(
                             bookingReference = bookingReference,
-                            onViewBookings = { navController.navigate("bookings") },
-                            onBackToHome = { navController.navigate("home") }
+                            onViewBookings = { navController.navigate(Screen.MyBookings.route) },
+                            onBackToHome = { navController.navigate(Screen.Home.route) }
                         )
                     }
                 }

@@ -137,7 +137,7 @@ const MyBookings = () => {
       }
     } catch (err) {
       const errorInfo = handleApiError(err);
-      alert(errorInfo.message || 'Failed to start payment');
+      showToast(errorInfo.message || 'Failed to start payment', 'error', 5000);
     }
   };
 
@@ -195,8 +195,15 @@ const MyBookings = () => {
       
       <div className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Bookings</h1>
-          <p className="text-gray-600">Manage and view all your trip bookings</p>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Calendar className="text-white" size={24} />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold brand-gradient-text">My Bookings</h1>
+              <p className="text-gray-600 mt-1">Manage and view all your trip bookings</p>
+            </div>
+          </div>
         </div>
 
         {error && !loading && (
@@ -216,7 +223,7 @@ const MyBookings = () => {
             {bookings.map((booking) => (
               <div
                 key={booking.id}
-                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow"
+                className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -270,7 +277,7 @@ const MyBookings = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-gray-500" />
                     <div>
@@ -413,18 +420,18 @@ const MyBookings = () => {
                       {((booking.status === 'PENDING' && booking.bookingType === 'DIRECT') || 
                         (booking.status === 'CONFIRMED' && booking.bookingType === 'AGENT')) && 
                         booking.paymentStatus === 'PENDING' && (
-                        <button
-                          onClick={() => handleCompletePayment(booking.id)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2 font-semibold"
-                        >
-                          <CreditCard size={16} />
-                          Complete Payment
-                        </button>
+                      <button
+                        onClick={() => handleCompletePayment(booking.id)}
+                        className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-semibold transform hover:scale-105"
+                      >
+                        <CreditCard size={16} />
+                        Complete Payment
+                      </button>
                       )}
                       {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && (
                         <button
                           onClick={() => handleEdit(booking)}
-                          className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition flex items-center gap-2"
+                          className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-all flex items-center gap-2 font-medium shadow-sm hover:shadow"
                         >
                           <Pencil size={16} />
                           Edit
@@ -433,7 +440,7 @@ const MyBookings = () => {
                       {booking.status === 'CONFIRMED' && (
                         <button
                           onClick={() => handleComplete(booking.id)}
-                          className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition flex items-center gap-2"
+                          className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all flex items-center gap-2 font-medium shadow-sm hover:shadow"
                         >
                           <CheckCircle size={16} />
                           Mark Complete
@@ -442,7 +449,7 @@ const MyBookings = () => {
                       {booking.status === 'PENDING' && booking.bookingType === 'DIRECT' && booking.paymentStatus !== 'PENDING' && (
                         <button
                           onClick={() => handleCancel(booking.id, booking.bookingReference)}
-                          className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition flex items-center gap-2"
+                          className="px-4 py-2 text-red-600 border border-red-300 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2 font-medium shadow-sm hover:shadow"
                         >
                           <X size={16} />
                           Cancel Booking
@@ -451,7 +458,7 @@ const MyBookings = () => {
                       {booking.status === 'PENDING' && booking.bookingType === 'AGENT' && (
                         <button
                           onClick={() => handleCancel(booking.id, booking.bookingReference)}
-                          className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition flex items-center gap-2"
+                          className="px-4 py-2 text-red-600 border border-red-300 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2 font-medium shadow-sm hover:shadow"
                         >
                           <X size={16} />
                           Cancel Booking

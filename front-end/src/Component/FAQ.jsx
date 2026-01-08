@@ -13,7 +13,7 @@ function FAQ() {
         const response = await api.get('/api/faq');
         setFaqs(response.data.faqs || []);
       } catch (error) {
-        console.error('Failed to load FAQs:', error);
+        // Failed to load FAQs - error logged for debugging
         // Fallback to default FAQs if API fails
         setFaqs([
           { id: 1, question: 'How do I search for destinations?', answer: 'Use the search bar to enter a city, country, or destination name. You can also filter by category and adjust dates and budget.', displayOrder: 1 },

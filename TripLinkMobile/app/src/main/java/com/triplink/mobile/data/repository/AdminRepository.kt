@@ -84,6 +84,45 @@ class AdminRepository(
         }
     }
     
+    suspend fun createDestination(request: Map<String, Any>): Result<DestinationResponse> {
+        return try {
+            val response = apiService.createDestination(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to create destination"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun updateDestination(id: Int, request: Map<String, Any>): Result<DestinationResponse> {
+        return try {
+            val response = apiService.updateDestination(id, request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to update destination"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun deleteDestination(id: Int): Result<ApiResponse> {
+        return try {
+            val response = apiService.deleteDestination(id)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ApiResponse(success = true))
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to delete destination"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
     suspend fun getAdminStats(): Result<AdminStatsResponse> {
         return try {
             val response = apiService.getAdminStats()
@@ -195,6 +234,99 @@ class AdminRepository(
                 Result.success(response.body()!!)
             } else {
                 Result.failure(Exception(response.message() ?: "Failed to get collections"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun getAdminCollection(id: Int): Result<CollectionDetailResponse> {
+        return try {
+            val response = apiService.getAdminCollection(id)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to get collection"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun createCollection(request: CreateCollectionRequest): Result<CollectionResponse> {
+        return try {
+            val response = apiService.createCollection(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to create collection"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun updateCollection(id: Int, request: UpdateCollectionRequest): Result<CollectionResponse> {
+        return try {
+            val response = apiService.updateCollection(id, request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to update collection"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun deleteCollection(id: Int): Result<ApiResponse> {
+        return try {
+            val response = apiService.deleteCollection(id)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ApiResponse(success = true))
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to delete collection"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun addDestinationToCollection(collectionId: Int, destinationId: Int, order: Int? = null): Result<ApiResponse> {
+        return try {
+            val request = if (order != null) mapOf("order" to order) else null
+            val response = apiService.addDestinationToCollection(collectionId, destinationId, request)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ApiResponse(success = true))
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to add destination to collection"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun removeDestinationFromCollection(collectionId: Int, destinationId: Int): Result<ApiResponse> {
+        return try {
+            val response = apiService.removeDestinationFromCollection(collectionId, destinationId)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ApiResponse(success = true))
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to remove destination from collection"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun updateDestinationOrder(collectionId: Int, destinationOrders: Map<Int, Int>): Result<ApiResponse> {
+        return try {
+            val request = UpdateDestinationOrderRequest(destinationOrders = destinationOrders)
+            val response = apiService.updateDestinationOrder(collectionId, request)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: ApiResponse(success = true))
+            } else {
+                Result.failure(Exception(response.message() ?: "Failed to update destination order"))
             }
         } catch (e: Exception) {
             Result.failure(e)

@@ -41,19 +41,24 @@ fun SearchBar(
     // Fetch autocomplete suggestions
     LaunchedEffect(destination) {
         if (destination.length >= 2 && destinationRepository != null) {
+            showSuggestions = true
             loadingSuggestions = true
             scope.launch {
                 val result = destinationRepository.getAutocompleteSuggestions(destination, 8)
                 result.onSuccess {
-                    suggestions = it
+                    // Filter out suggestions with null or empty names
+                    suggestions = it.filter { !it.name.isNullOrEmpty() }
                     loadingSuggestions = false
+                    showSuggestions = suggestions.isNotEmpty() || destination.length < 2
                 }.onFailure {
                     suggestions = emptyList()
                     loadingSuggestions = false
+                    showSuggestions = destination.length < 2
                 }
             }
         } else {
             suggestions = emptyList()
+            showSuggestions = destination.isNotEmpty() && destination.length < 2
         }
     }
 
@@ -84,7 +89,10 @@ fun SearchBar(
                 // Destination input
                 OutlinedTextField(
                     value = destination,
-                    onValueChange = { destination = it },
+                    onValueChange = { 
+                        destination = it
+                        showSuggestions = it.isNotEmpty()
+                    },
                     modifier = Modifier.weight(2f),
                     placeholder = { Text("Search destinations, cities, or countries") },
                     leadingIcon = {
@@ -93,11 +101,18 @@ fun SearchBar(
                             contentDescription = null
                         )
                     },
-                    trailingIcon = if (loadingSuggestions) {
-                        {
+                    trailingIcon = {
+                        if (loadingSuggestions) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else if (destination.isNotEmpty()) {
+                            IconButton(onClick = { 
+                                destination = ""
+                                showSuggestions = false
+                            }) {
+                                Icon(Icons.Default.Clear, "Clear")
+                            }
                         }
-                    } else null,
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
@@ -148,32 +163,36 @@ fun SearchBar(
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp))
                             }
                         } else if (suggestions.isNotEmpty()) {
-                            suggestions.forEach { suggestion ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            destination = suggestion.name
-                                            showSuggestions = false
-                                            onSearch(SearchPayload(suggestion.name))
-                                        }
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.LocationOn,
-                                        contentDescription = null,
-                                        tint = Purple600,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Text(
-                                        text = suggestion.name,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                            suggestions
+                                .filterNotNull()
+                                .filter { !it.name.isNullOrEmpty() }
+                                .forEach { suggestion ->
+                                    val suggestionName = suggestion.name!!
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                destination = suggestionName
+                                                showSuggestions = false
+                                                onSearch(SearchPayload(suggestionName))
+                                            }
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationOn,
+                                            contentDescription = null,
+                                            tint = Purple600,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = suggestionName,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                    Divider()
                                 }
-                                Divider()
-                            }
                         } else if (destination.length < 2) {
                             Text(
                                 text = "Popular destinations",

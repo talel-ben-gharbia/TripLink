@@ -105,10 +105,10 @@ fun CollectionDetailScreen(
                         .fillMaxWidth()
                         .height(300.dp)
                 ) {
-                    collectionData.collection.coverImage?.let { imageUrl ->
+                    collectionData.coverImage?.let { imageUrl ->
                         AsyncImage(
                             model = imageUrl,
-                            contentDescription = collectionData.collection.name,
+                            contentDescription = collectionData.name,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -145,13 +145,13 @@ fun CollectionDetailScreen(
                             .padding(24.dp)
                     ) {
                         Text(
-                            text = collectionData.collection.name,
+                            text = collectionData.name,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         
-                        collectionData.collection.description?.let { desc ->
+                        collectionData.description?.let { desc ->
                             Text(
                                 text = desc,
                                 style = MaterialTheme.typography.bodyLarge,

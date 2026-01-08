@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.triplink.mobile.navigation.Screen
 import com.triplink.mobile.ui.components.Footer
 import com.triplink.mobile.ui.components.LoadingSpinner
 import com.triplink.mobile.ui.components.Navbar
@@ -119,7 +120,7 @@ fun EmailVerificationScreen(navController: NavController) {
                             }
                             
                             TextButton(
-                                onClick = { navController.navigate("home") },
+                                onClick = { navController.navigate(Screen.Home.route) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Default.ArrowBack, null)

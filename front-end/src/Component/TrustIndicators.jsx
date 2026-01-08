@@ -26,11 +26,11 @@ function TrustIndicators() {
           const testimonialsRes = await api.get('/api/testimonials/featured');
           setTestimonials(testimonialsRes.data.testimonials || []);
         } catch (e) {
-          console.error('Failed to load testimonials:', e);
+          // Failed to load testimonials - error logged for debugging
           setTestimonials([]);
         }
       } catch (error) {
-        console.error('Failed to load stats:', error);
+        // Failed to load stats - error logged for debugging
         // Fallback to default stats
         setStats([
           { icon: Users, value: '0', label: 'Happy Travelers', color: 'from-blue-500 to-cyan-500' },

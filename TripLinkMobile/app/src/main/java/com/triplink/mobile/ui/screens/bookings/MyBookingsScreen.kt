@@ -51,6 +51,11 @@ fun MyBookingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val filteredBookings = viewModel.getFilteredBookings()
     
+    // Load data when screen is displayed
+    LaunchedEffect(Unit) {
+        viewModel.loadBookings()
+    }
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -174,7 +179,7 @@ fun BookingCard(
     val context = LocalContext.current
     
     // Edit form state
-    var editCheckInDate by remember { mutableStateOf(booking.checkInDate ?: booking.travelDate) }
+    var editCheckInDate by remember { mutableStateOf(booking.checkInDate ?: booking.travelDate ?: "") }
     var editCheckOutDate by remember { mutableStateOf(booking.checkOutDate ?: "") }
     var editNumberOfGuests by remember { mutableStateOf((booking.numberOfGuests ?: booking.numberOfTravelers).toString()) }
     var editContactEmail by remember { mutableStateOf(booking.contactEmail ?: "") }
@@ -221,7 +226,7 @@ fun BookingCard(
                     }
                 ) {
                     Text(
-                        text = booking.status,
+                        text = booking.status ?: "UNKNOWN",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -250,9 +255,23 @@ fun BookingCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(
-                            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(booking.travelDate) ?: Date()
-                        ),
+                        text = booking.travelDate?.let { dateStr ->
+                            try {
+                                SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(
+                                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr) ?: Date()
+                                )
+                            } catch (e: Exception) {
+                                dateStr
+                            }
+                        } ?: booking.checkInDate?.let { dateStr ->
+                            try {
+                                SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(
+                                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr) ?: Date()
+                                )
+                            } catch (e: Exception) {
+                                dateStr
+                            }
+                        } ?: "Date not set",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -265,7 +284,7 @@ fun BookingCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Text(
-                        text = "$${String.format("%.0f", booking.totalPrice)}",
+                        text = booking.totalPrice?.let { "$${String.format("%.0f", it)}" } ?: "Price not available",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Purple600
@@ -274,33 +293,35 @@ fun BookingCard(
             }
             
             // Payment status indicator
-            if (booking.paymentStatus == "PENDING" && booking.status == "PENDING") {
+            if (booking.paymentStatus == "PENDING" && (booking.status == "PENDING")) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = Color(0xFFFFF3CD),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Payment Required",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF856404)
+                            )
+                        }
                         Text(
-                            text = "Payment Required",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            text = "For security reasons, payments must be completed on our website. Please visit the web version to complete your payment.",
+                            style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF856404)
                         )
-                        Button(
-                            onClick = { showPaymentDialog = true },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Purple600
-                            )
-                        ) {
-                            Text("Pay Now")
-                        }
                     }
                 }
             }
@@ -309,7 +330,7 @@ fun BookingCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (booking.status != "CANCELLED" && booking.status != "COMPLETED") {
+                if (booking.status != "CANCELLED" && booking.status != "COMPLETED" && booking.status != null) {
                     OutlinedButton(
                         onClick = { showEditDialog = true },
                         modifier = Modifier.weight(1f)
@@ -423,59 +444,41 @@ fun BookingCard(
         )
     }
     
-    // Payment Dialog
+    // Payment Dialog - Disabled, show informational message
     if (showPaymentDialog) {
         AlertDialog(
             onDismissRequest = { showPaymentDialog = false },
-            title = { Text("Complete Payment") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Payment on Web") },
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("You will be redirected to our secure payment page to complete your booking.")
                     Text(
-                        text = "Amount: $${String.format("%.2f", booking.totalPrice)}",
+                        text = "For security reasons, payments must be completed on our website.",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "Amount: ${booking.totalPrice?.let { "$${String.format("%.2f", it)}" } ?: "Not available"}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    if (isProcessingPayment) {
-                        CircularProgressIndicator()
-                    }
+                    Text(
+                        text = "Please visit our website to complete your payment securely.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        isProcessingPayment = true
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                            viewModel.createCheckoutSession(booking.id).collect { result ->
-                                result.onSuccess { checkoutResponse ->
-                                    // Open Stripe checkout URL in browser
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(checkoutResponse.checkoutUrl))
-                                    context.startActivity(intent)
-                                    isProcessingPayment = false
-                                    showPaymentDialog = false
-                                }.onFailure {
-                                    isProcessingPayment = false
-                                }
-                            }
-                        }
-                    },
-                    enabled = !isProcessingPayment
-                ) {
-                    if (isProcessingPayment) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text("Proceed to Payment")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPaymentDialog = false }) {
-                    Text("Cancel")
+                Button(onClick = { showPaymentDialog = false }) {
+                    Text("Understood")
                 }
             }
         )

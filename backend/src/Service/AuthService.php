@@ -170,15 +170,15 @@ class AuthService
      */
     public function authenticateUser(string $email, string $password, string $ipAddress): array
     {
-        // Rate limiting check
-        if (!$this->rateLimitCheck($email, $ipAddress)) {
-            return [
-                'success' => false,
-                'user' => null,
-                'token' => null,
-                'errors' => ['Too many failed login attempts. Please try again in 15 minutes.']
-            ];
-        }
+        // Rate limiting check - DISABLED
+        // if (!$this->rateLimitCheck($email, $ipAddress)) {
+        //     return [
+        //         'success' => false,
+        //         'user' => null,
+        //         'token' => null,
+        //         'errors' => ['Too many failed login attempts. Please try again in 15 minutes.']
+        //     ];
+        // }
 
         $user = $this->userRepository->findOneBy(['email' => $email]);
 

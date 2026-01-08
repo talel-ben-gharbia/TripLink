@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,9 +36,35 @@ fun Navbar(
     val windowSize = LocalWindowSize.current
     val padding = horizontalPadding(windowSize)
     var showMobileMenu by remember { mutableStateOf(false) }
-    val isAgent = user?.roles?.contains("ROLE_AGENT") == true
-    val isAdmin = user?.roles?.contains("ROLE_ADMIN") == true
+    val isAgent = user?.roles?.contains("ROLE_AGENT") == true || user?.isAgent == true
+    val isAdmin = user?.roles?.contains("ROLE_ADMIN") == true || user?.isAdmin == true
     val isCompact = windowSize.width == com.triplink.mobile.ui.utils.WindowType.Compact
+    
+    // Use AuthStateManager as source of truth (matching front-end behavior)
+    val authStateUser by com.triplink.mobile.ui.viewmodel.AuthStateManager.user.collectAsState()
+    val currentUser = authStateUser ?: user
+    
+    // Verify auth on mount like front-end Navbar
+    val authRepository = com.triplink.mobile.di.LocalAppContainer.current.authRepository
+    
+    LaunchedEffect(Unit) {
+        // Check if user is logged in (from stored data)
+        val storedUser = authRepository.getStoredUser()
+        if (storedUser != null) {
+            // Verify token is still valid by calling /api/me
+            val response = authRepository.getCurrentUser()
+            response.onSuccess { userResponse ->
+                authRepository.saveUser(userResponse.user)
+                com.triplink.mobile.ui.viewmodel.AuthStateManager.setUser(userResponse.user)
+            }.onFailure {
+                // Token invalid, clear storage
+                authRepository.logout()
+                com.triplink.mobile.ui.viewmodel.AuthStateManager.clearUser()
+            }
+        } else {
+            com.triplink.mobile.ui.viewmodel.AuthStateManager.clearUser()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -114,13 +141,13 @@ fun Navbar(
                     Spacer(modifier = Modifier.width(24.dp))
                     NavLink(navController, Screen.Collections.route, "Collections")
                     
-                    if (user != null) {
+                    if (currentUser != null) {
                         Spacer(modifier = Modifier.width(24.dp))
                         NavLink(navController, Screen.Wishlist.route, "Wishlist")
                         Spacer(modifier = Modifier.width(24.dp))
                         NavLink(navController, Screen.MyBookings.route, "My Bookings")
                         
-                        if (isAgent) {
+                        if (currentUser?.roles?.contains("ROLE_AGENT") == true || currentUser?.isAgent == true) {
                             Spacer(modifier = Modifier.width(24.dp))
                             NavLink(navController, Screen.AgentDashboard.route, "Agent Dashboard")
                         }
@@ -138,7 +165,7 @@ fun Navbar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isCompact) {
-                    if (user != null) {
+                    if (currentUser != null) {
                         // Notification Center
                         val appContainer = com.triplink.mobile.di.LocalAppContainer.current
                         NotificationCenter(
@@ -146,11 +173,13 @@ fun Navbar(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         
-                        Text(
-                            text = TextUtils.formatUserName(user.firstName, user.lastName, user.email),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(end = 12.dp)
-                        )
+                        currentUser?.let { u ->
+                            Text(
+                                text = TextUtils.formatUserName(u.firstName, u.lastName, u.email),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(end = 12.dp)
+                            )
+                        }
                         Button(
                             onClick = onLogout,
                             colors = ButtonDefaults.buttonColors(
@@ -189,8 +218,8 @@ fun Navbar(
         if (showMobileMenu) {
             MobileMenu(
                 navController = navController,
-                user = user,
-                isAgent = isAgent,
+                user = currentUser,
+                isAgent = currentUser?.roles?.contains("ROLE_AGENT") == true || currentUser?.isAgent == true,
                 onOpenAuth = {
                     onOpenAuth()
                     showMobileMenu = false

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, X, Check, CheckCheck, Loader2 } from 'lucide-react';
 import * as notificationService from '../services/notificationService';
 
 const NotificationCenter = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -74,7 +76,11 @@ const NotificationCenter = () => {
       handleMarkAsRead(notification.id);
     }
     if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+      if (notification.actionUrl.startsWith('http')) {
+        window.location.href = notification.actionUrl;
+      } else {
+        navigate(notification.actionUrl);
+      }
     }
   };
 

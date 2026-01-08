@@ -8,7 +8,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -32,6 +36,7 @@ import com.triplink.mobile.ui.viewmodel.ViewMode
 @Composable
 fun DestinationsScreen(
     navController: NavController,
+    initialSearchQuery: String = "",
     viewModel: DestinationsViewModel = viewModel(
         factory = ViewModelFactory(
             authRepository = LocalAppContainer.current.authRepository,
@@ -42,6 +47,15 @@ fun DestinationsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAuthModal by remember { mutableStateOf(false) }
+    
+    // Load data when screen is displayed
+    LaunchedEffect(Unit) {
+        if (initialSearchQuery.isNotEmpty()) {
+            viewModel.search(initialSearchQuery)
+        } else {
+            viewModel.refresh()
+        }
+    }
     
     Box(
         modifier = Modifier
@@ -110,46 +124,91 @@ fun DestinationsScreen(
                     }
                 }
                 
-                // Active filters
+                // Active filters - Wrap properly on small screens
                 if (uiState.selectedCountry != null || 
                     uiState.selectedCategory != null || 
                     uiState.selectedTags.isNotEmpty() ||
-                    uiState.priceMin != null) {
-                    Row(
+                    uiState.priceMin != null ||
+                    uiState.priceMax != null) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "Active filters:",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         
-                        uiState.selectedCountry?.let { country ->
-                            AssistChip(
-                                onClick = { viewModel.filterByCountry(null) },
-                                label = { Text(country) },
-                                trailingIcon = {
-                                    Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                        // Wrap chips properly
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.selectedCountry?.let { country ->
+                                AssistChip(
+                                    onClick = { viewModel.filterByCountry(null) },
+                                    label = { Text(country) },
+                                    trailingIcon = {
+                                        Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                                    }
+                                )
+                            }
+                            
+                            uiState.selectedCategory?.let { category ->
+                                AssistChip(
+                                    onClick = { viewModel.filterByCategory(null) },
+                                    label = { Text(category) },
+                                    trailingIcon = {
+                                        Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                                    }
+                                )
+                            }
+                            
+                            uiState.selectedTags.forEach { tag ->
+                                AssistChip(
+                                    onClick = { viewModel.toggleTag(tag) },
+                                    label = { Text(tag) },
+                                    trailingIcon = {
+                                        Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                                    }
+                                )
+                            }
+                            
+                            if (uiState.priceMin != null || uiState.priceMax != null) {
+                                val priceMin = uiState.priceMin
+                                val priceMax = uiState.priceMax
+                                val priceText = when {
+                                    priceMin != null && priceMax != null -> 
+                                        "$${priceMin.toInt()} - $${priceMax.toInt()}"
+                                    priceMin != null -> "From $${priceMin.toInt()}"
+                                    priceMax != null -> "Up to $${priceMax.toInt()}"
+                                    else -> "Price"
                                 }
+                                AssistChip(
+                                    onClick = { 
+                                        viewModel.setPriceRange(null, null)
+                                    },
+                                    label = { Text(priceText) },
+                                    trailingIcon = {
+                                        Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                                    }
+                                )
+                            }
+                            
+                            AssistChip(
+                                onClick = { viewModel.clearFilters() },
+                                label = { Text("Clear all") },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    labelColor = MaterialTheme.colorScheme.onErrorContainer
+                                )
                             )
                         }
-                        
-                        uiState.selectedCategory?.let { category ->
-                            AssistChip(
-                                onClick = { viewModel.filterByCategory(null) },
-                                label = { Text(category) },
-                                trailingIcon = {
-                                    Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
-                                }
-                            )
-                        }
-                        
-                        AssistChip(
-                            onClick = { viewModel.clearFilters() },
-                            label = { Text("Clear all") }
-                        )
                     }
                 }
             }
@@ -163,6 +222,7 @@ fun DestinationsScreen(
                     onTagToggled = { viewModel.toggleTag(it) },
                     onPriceRangeChanged = { min, max -> viewModel.setPriceRange(min, max) },
                     onSortChanged = { viewModel.setSortBy(it) },
+                    onClearFilters = { viewModel.clearFilters() },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -254,6 +314,7 @@ fun FiltersPanel(
     onTagToggled: (String) -> Unit,
     onPriceRangeChanged: (Double?, Double?) -> Unit,
     onSortChanged: (String) -> Unit,
+    onClearFilters: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -264,63 +325,102 @@ fun FiltersPanel(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text(
-                text = "Filters",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            
-            // Sort
-            Column {
+            // Header with clear button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Sort by",
-                    style = MaterialTheme.typography.titleSmall
+                    text = "Filters",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                TextButton(onClick = onClearFilters) {
+                    Text("Reset All")
+                }
+            }
+            
+            // Sort - Improved responsive layout
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    listOf(
-                        "popularity:desc" to "Popularity",
-                        "price:asc" to "Price: Low to High",
-                        "price:desc" to "Price: High to Low",
-                        "rating:desc" to "Highest Rated"
-                    ).forEach { (value, label) ->
-                        FilterChip(
-                            onClick = { onSortChanged(value) },
-                            label = { Text(label) },
-                            selected = uiState.sortBy == value,
-                            modifier = Modifier.weight(1f)
-                        )
+                    Text(
+                        text = "Sort by",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    // Wrap sort options for better responsiveness
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            "popularity:desc" to "Popularity",
+                            "price:asc" to "Price: Low to High",
+                            "price:desc" to "Price: High to Low",
+                            "rating:desc" to "Highest Rated"
+                        ).forEach { (value, label) ->
+                            FilterChip(
+                                onClick = { onSortChanged(value) },
+                                label = { 
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodySmall
+                                    ) 
+                                },
+                                selected = uiState.sortBy == value,
+                                modifier = Modifier.padding(0.dp)
+                            )
+                        }
                     }
                 }
             }
             
-            Divider()
-            
             // Country Filter
             if (uiState.availableCountries.isNotEmpty()) {
-                Column {
-                    Text(
-                        text = "Country",
-                        style = MaterialTheme.typography.titleSmall
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                     )
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.availableCountries) { country ->
-                            FilterChip(
-                                onClick = {
-                                    onCountrySelected(
-                                        if (uiState.selectedCountry == country) null else country
-                                    )
-                                },
-                                label = { Text(country) },
-                                selected = uiState.selectedCountry == country
-                            )
+                        Text(
+                            text = "Country",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            items(uiState.availableCountries) { country ->
+                                FilterChip(
+                                    onClick = {
+                                        onCountrySelected(
+                                            if (uiState.selectedCountry == country) null else country
+                                        )
+                                    },
+                                    label = { Text(country ?: "Unknown") },
+                                    selected = uiState.selectedCountry == country
+                                )
+                            }
                         }
                     }
                 }
@@ -328,24 +428,36 @@ fun FiltersPanel(
             
             // Category Filter
             if (uiState.availableCategories.isNotEmpty()) {
-                Column {
-                    Text(
-                        text = "Category",
-                        style = MaterialTheme.typography.titleSmall
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                     )
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.availableCategories) { category ->
-                            FilterChip(
-                                onClick = {
-                                    onCategorySelected(
-                                        if (uiState.selectedCategory == category) null else category
-                                    )
-                                },
-                                label = { Text(category) },
-                                selected = uiState.selectedCategory == category
-                            )
+                        Text(
+                            text = "Category",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            items(uiState.availableCategories) { category ->
+                                FilterChip(
+                                    onClick = {
+                                        onCategorySelected(
+                                            if (uiState.selectedCategory == category) null else category
+                                        )
+                                    },
+                                    label = { Text(category ?: "Unknown") },
+                                    selected = uiState.selectedCategory == category
+                                )
+                            }
                         }
                     }
                 }
@@ -353,55 +465,102 @@ fun FiltersPanel(
             
             // Tags Filter
             if (uiState.availableTags.isNotEmpty()) {
-                Column {
-                    Text(
-                        text = "Tags",
-                        style = MaterialTheme.typography.titleSmall
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                     )
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(uiState.availableTags) { tag ->
-                            FilterChip(
-                                onClick = { onTagToggled(tag) },
-                                label = { Text(tag) },
-                                selected = uiState.selectedTags.contains(tag)
-                            )
+                        Text(
+                            text = "Tags",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            items(uiState.availableTags) { tag ->
+                                FilterChip(
+                                    onClick = { onTagToggled(tag) },
+                                    label = { Text(tag ?: "Unknown") },
+                                    selected = uiState.selectedTags.contains(tag)
+                                )
+                            }
                         }
                     }
                 }
             }
             
-            // Price Range
-            Column {
-                Text(
-                    text = "Price Range",
-                    style = MaterialTheme.typography.titleSmall
+            // Price Range - Improved design
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = uiState.priceMin?.toString() ?: "",
-                        onValueChange = {
-                            val min = it.toDoubleOrNull()
-                            onPriceRangeChanged(min, uiState.priceMax)
-                        },
-                        label = { Text("Min") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
+                    Text(
+                        text = "Price Range",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
-                    OutlinedTextField(
-                        value = uiState.priceMax?.toString() ?: "",
-                        onValueChange = {
-                            val max = it.toDoubleOrNull()
-                            onPriceRangeChanged(uiState.priceMin, max)
-                        },
-                        label = { Text("Max") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = uiState.priceMin?.toString() ?: "",
+                            onValueChange = {
+                                val min = it.toDoubleOrNull()
+                                onPriceRangeChanged(min, uiState.priceMax)
+                            },
+                            label = { Text("Min Price") },
+                            placeholder = { Text("0") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            leadingIcon = {
+                                Text(
+                                    text = "$",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(start = 12.dp)
+                                )
+                            }
+                        )
+                        Text(
+                            text = "—",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                        OutlinedTextField(
+                            value = uiState.priceMax?.toString() ?: "",
+                            onValueChange = {
+                                val max = it.toDoubleOrNull()
+                                onPriceRangeChanged(uiState.priceMin, max)
+                            },
+                            label = { Text("Max Price") },
+                            placeholder = { Text("1000") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            leadingIcon = {
+                                Text(
+                                    text = "$",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(start = 12.dp)
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }

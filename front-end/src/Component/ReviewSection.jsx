@@ -91,7 +91,7 @@ const ReviewSection = ({ destinationId }) => {
       await loadStats();
     } catch (error) {
       const message = error.response?.data?.error || error.message || 'Failed to save review';
-      alert(message);
+      showToast(message, 'error', 5000);
     } finally {
       setSubmitting(false);
     }
@@ -114,7 +114,7 @@ const ReviewSection = ({ destinationId }) => {
       await loadStats();
     } catch (error) {
       const message = error.response?.data?.error || error.message || 'Failed to delete review';
-      alert(message);
+      showToast(message, 'error', 5000);
     }
   };
 

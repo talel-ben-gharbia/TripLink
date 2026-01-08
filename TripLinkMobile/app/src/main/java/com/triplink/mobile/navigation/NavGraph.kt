@@ -5,6 +5,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.triplink.mobile.navigation.RequireAdmin
+import com.triplink.mobile.navigation.RequireAgent
+import com.triplink.mobile.navigation.RequireAuth
 import com.triplink.mobile.ui.screens.home.HomeScreen
 
 @Composable
@@ -17,8 +20,29 @@ fun NavGraph(navController: NavHostController) {
             HomeScreen(navController = navController)
         }
         
-        composable(Screen.Destinations.route) {
-            com.triplink.mobile.ui.screens.destinations.DestinationsScreen(navController = navController)
+        composable(
+            route = "destinations?query={query}",
+            arguments = listOf(
+                androidx.navigation.navArgument("query") {
+                    type = androidx.navigation.NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query") ?: ""
+            com.triplink.mobile.ui.screens.destinations.DestinationsScreen(
+                navController = navController,
+                initialSearchQuery = query
+            )
+        }
+        
+        // Fallback route without query parameter (for direct navigation)
+        composable("destinations") {
+            com.triplink.mobile.ui.screens.destinations.DestinationsScreen(
+                navController = navController,
+                initialSearchQuery = ""
+            )
         }
         
         composable(
@@ -48,65 +72,92 @@ fun NavGraph(navController: NavHostController) {
         }
         
         composable(Screen.Profile.route) {
-            com.triplink.mobile.ui.screens.profile.ProfileScreen(navController = navController)
+            RequireAuth(navController = navController) {
+                com.triplink.mobile.ui.screens.profile.ProfileScreen(navController = navController)
+            }
         }
         
         composable(Screen.Settings.route) {
-            com.triplink.mobile.ui.screens.settings.SettingsScreen(navController = navController)
+            RequireAuth(navController = navController) {
+                com.triplink.mobile.ui.screens.settings.SettingsScreen(navController = navController)
+            }
         }
         
         composable(Screen.Wishlist.route) {
-            com.triplink.mobile.ui.screens.wishlist.WishlistScreen(navController = navController)
+            RequireAuth(navController = navController) {
+                com.triplink.mobile.ui.screens.wishlist.WishlistScreen(navController = navController)
+            }
         }
         
         composable(Screen.MyBookings.route) {
-            com.triplink.mobile.ui.screens.bookings.MyBookingsScreen(navController = navController)
+            RequireAuth(navController = navController) {
+                com.triplink.mobile.ui.screens.bookings.MyBookingsScreen(navController = navController)
+            }
         }
         
-        composable(Screen.BookingSuccess.route) {
+        composable(Screen.BookingSuccess.route) { backStackEntry ->
+            // Extract query parameters from savedStateHandle or URI
+            val savedStateHandle = backStackEntry.savedStateHandle
+            val sessionId = savedStateHandle.get<String>("session_id")
+            val bookingId = savedStateHandle.get<String>("booking_id")?.toIntOrNull()
             com.triplink.mobile.ui.screens.booking.BookingSuccessScreen(
                 navController = navController,
-                bookingId = null, // TODO: Extract from query params
-                sessionId = null // TODO: Extract from query params
+                bookingId = bookingId,
+                sessionId = sessionId
             )
         }
         
-        composable(Screen.BookingCancel.route) {
+        composable(Screen.BookingCancel.route) { backStackEntry ->
+            // Extract query parameters from savedStateHandle or URI
+            val savedStateHandle = backStackEntry.savedStateHandle
+            val bookingId = savedStateHandle.get<String>("booking_id")?.toIntOrNull()
             com.triplink.mobile.ui.screens.booking.BookingCancelScreen(
                 navController = navController,
-                bookingId = null // TODO: Extract from query params
+                bookingId = bookingId
             )
         }
         
         composable(Screen.AgentDashboard.route) {
-            com.triplink.mobile.ui.screens.agent.AgentDashboardScreen(navController = navController)
+            RequireAgent(navController = navController) {
+                com.triplink.mobile.ui.screens.agent.AgentDashboardScreen(navController = navController)
+            }
         }
         
         composable(Screen.ApplyAsAgent.route) {
-            com.triplink.mobile.ui.screens.agent.ApplyAsAgentScreen(navController = navController)
+            RequireAuth(navController = navController) {
+                com.triplink.mobile.ui.screens.agent.ApplyAsAgentScreen(navController = navController)
+            }
         }
         
         composable(Screen.AdminDashboard.route) {
-            com.triplink.mobile.ui.screens.admin.AdminDashboardScreen(navController = navController)
+            RequireAdmin(navController = navController) {
+                com.triplink.mobile.ui.screens.admin.AdminDashboardScreen(navController = navController)
+            }
         }
         
         composable(Screen.AdminUsers.route) {
-            com.triplink.mobile.ui.screens.admin.AdminUsersScreen(navController = navController)
+            RequireAdmin(navController = navController) {
+                com.triplink.mobile.ui.screens.admin.AdminUsersScreen(navController = navController)
+            }
         }
         
         composable(
             route = Screen.UserDetails.route,
             arguments = listOf(navArgument("id") { type = androidx.navigation.NavType.IntType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("id") ?: 0
-            com.triplink.mobile.ui.screens.admin.UserDetailsScreen(
-                navController = navController,
-                userId = id
-            )
+            RequireAdmin(navController = navController) {
+                val id = backStackEntry.arguments?.getInt("id") ?: 0
+                com.triplink.mobile.ui.screens.admin.UserDetailsScreen(
+                    navController = navController,
+                    userId = id
+                )
+            }
         }
         
         composable(Screen.AdminDestinations.route) {
-            com.triplink.mobile.ui.screens.admin.AdminDestinationsScreen(navController = navController)
+            RequireAdmin(navController = navController) {
+                com.triplink.mobile.ui.screens.admin.AdminDestinationsScreen(navController = navController)
+            }
         }
         
         composable(Screen.HelpCenter.route) {
@@ -144,15 +195,21 @@ fun NavGraph(navController: NavHostController) {
         
         // Agent screens
         composable(Screen.ClientPortfolio.route) {
-            com.triplink.mobile.ui.screens.agent.ClientPortfolioScreen(navController = navController)
+            RequireAgent(navController = navController) {
+                com.triplink.mobile.ui.screens.agent.ClientPortfolioScreen(navController = navController)
+            }
         }
         
         composable(Screen.PackageBuilder.route) {
-            com.triplink.mobile.ui.screens.agent.PackageBuilderScreen(navController = navController)
+            RequireAgent(navController = navController) {
+                com.triplink.mobile.ui.screens.agent.PackageBuilderScreen(navController = navController)
+            }
         }
         
         composable(Screen.CommissionDashboard.route) {
-            com.triplink.mobile.ui.screens.agent.CommissionDashboardScreen(navController = navController)
+            RequireAgent(navController = navController) {
+                com.triplink.mobile.ui.screens.agent.CommissionDashboardScreen(navController = navController)
+            }
         }
     }
 }
